@@ -3,6 +3,8 @@
  * 使用 window.postMessage 进行通讯
  */
 
+import { MessageType } from "./message-types";
+
 export interface BridgeMessage<T = any> {
   source: 'content-script' | 'injected-script';
   type: string;
@@ -52,7 +54,7 @@ export class ContentScriptBridge {
   /**
    * 发送消息到 Injected Script
    */
-  postToInjected<T = any>(type: string, payload?: T): void {
+  postToInjected<T = any>(type: MessageType, payload?: T): void {
     const message: BridgeMessage<T> = {
       source: 'content-script',
       type,
@@ -64,7 +66,7 @@ export class ContentScriptBridge {
   /**
    * 发送请求到 Injected Script 并等待响应
    */
-  requestToInjected<T = any, R = any>(type: string, payload?: T): Promise<R> {
+  requestToInjected<T = any, R = any>(type: MessageType, payload?: T): Promise<R> {
     return new Promise((resolve, reject) => {
       const id = this.generateId();
       const message: BridgeMessage<T> = {
@@ -91,14 +93,14 @@ export class ContentScriptBridge {
   /**
    * 监听来自 Injected Script 的消息
    */
-  onMessage<T = any>(type: string, handler: (payload: T) => void): void {
+  onMessage<T = any>(type: MessageType, handler: (payload: T) => void): void {
     this.messageHandlers.set(type, handler);
   }
 
   /**
    * 移除消息监听器
    */
-  offMessage(type: string): void {
+  offMessage(type: MessageType): void {
     this.messageHandlers.delete(type);
   }
 
@@ -156,7 +158,7 @@ export class InjectedScriptBridge {
   /**
    * 发送消息到 Content Script
    */
-  postToContent<T = any>(type: string, payload?: T): void {
+  postToContent<T = any>(type: MessageType, payload?: T): void {
     const message: BridgeMessage<T> = {
       source: 'injected-script',
       type,
@@ -182,7 +184,7 @@ export class InjectedScriptBridge {
    * 监听来自 Content Script 的消息
    */
   onMessage<T = any, R = any>(
-    type: string,
+    type: MessageType,
     handler: (payload: T) => R | Promise<R>
   ): void {
     this.messageHandlers.set(type, handler);

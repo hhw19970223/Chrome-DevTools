@@ -1,37 +1,24 @@
-import { Container, Title, Stack, Group, Badge, Card, Text } from '@mantine/core';
-import { useDevToolsBridge } from './hooks/useDevToolsBridge';
-import { PageInspector } from './feature/PageInspector';
+import { Container, Stack, Card, Tabs } from "@mantine/core";
+import { IconBrandFigma } from '@tabler/icons-react';
+import { Figma } from "./feature/figma";
 
 function App() {
-  const {
-    isReady,
-    isContentScriptReady,
-    isInjectedScriptReady,
-  } = useDevToolsBridge();
-
   return (
-    <Container size="lg" py="xl">
+    <Container size="lg" py="md">
       <Stack gap="md">
-        <Title order={2}>DevTools Extension Panel</Title>
+        <Tabs defaultValue="figma" color="green" >
+          <Tabs.List>
+            <Tabs.Tab value="figma" leftSection={<IconBrandFigma size={16} />}>figma</Tabs.Tab>
+          </Tabs.List>
 
-        <Card shadow="sm" padding="lg" radius="md" withBorder>
-          <Stack gap="sm">
-            <Text fw={500}>连接状态</Text>
-            <Group>
-              <Badge color={isReady ? 'green' : 'gray'}>
-                Bridge: {isReady ? '已连接' : '未连接'}
-              </Badge>
-              <Badge color={isContentScriptReady ? 'green' : 'gray'}>
-                Content Script: {isContentScriptReady ? '就绪' : '未就绪'}
-              </Badge>
-              <Badge color={isInjectedScriptReady ? 'green' : 'gray'}>
-                Injected Script: {isInjectedScriptReady ? '就绪' : '未就绪'}
-              </Badge>
-            </Group>
-          </Stack>
-        </Card>
-
-        <PageInspector />
+          <Tabs.Panel value="page" pt="md">
+            <Card shadow="sm" padding="md" radius="md" withBorder>
+              <Stack gap="md">
+                <Figma />
+              </Stack>
+            </Card>
+          </Tabs.Panel>
+        </Tabs>
       </Stack>
     </Container>
   );

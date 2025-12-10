@@ -5,6 +5,7 @@
 
 import { Message } from './message';
 import { logger } from './logger';
+import { MessageType } from './message-types';
 
 export interface DevToolsMessage<T = any> extends Message<T> {
   target: 'content-script' | 'devtools' | 'injected-script';
@@ -60,7 +61,7 @@ export class DevToolsBridge {
   /**
    * 发送消息到 Content Script
    */
-  async sendToContent<T = any, R = any>(type: string, payload?: T): Promise<R> {
+  async sendToContent<T = any, R = any>(type: MessageType, payload?: T): Promise<R> {
     const message: DevToolsMessage<T> = {
       type,
       payload,
@@ -83,7 +84,7 @@ export class DevToolsBridge {
   /**
    * 发送消息到 Injected Script (通过 Content Script 转发)
    */
-  async sendToInjected<T = any, R = any>(type: string, payload?: T): Promise<R> {
+  async sendToInjected<T = any, R = any>(type: MessageType, payload?: T): Promise<R> {
     const message: DevToolsMessage<T> = {
       type,
       payload,
@@ -106,7 +107,7 @@ export class DevToolsBridge {
   /**
    * 通过长连接发送消息
    */
-  postMessage<T = any>(type: string, payload?: T): void {
+  postMessage<T = any>(type: MessageType, payload?: T): void {
     if (!this.connectionPort) {
       logger.error('Connection port is not available');
       return;
@@ -125,14 +126,14 @@ export class DevToolsBridge {
   /**
    * 监听消息
    */
-  onMessage<T = any>(type: string, handler: (payload: T, message: DevToolsMessage) => void): void {
+  onMessage<T = any>(type: MessageType, handler: (payload: T, message: DevToolsMessage) => void): void {
     this.messageHandlers.set(type, handler);
   }
 
   /**
    * 移除消息监听器
    */
-  offMessage(type: string): void {
+  offMessage(type: MessageType): void {
     this.messageHandlers.delete(type);
   }
 

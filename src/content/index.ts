@@ -5,7 +5,7 @@
 
 import { ContentScriptBridge } from '../utils/bridge';
 import { DevToolsMessage } from '../utils/devtools-bridge';
-import { MESSAGE_TYPES } from '../utils/message-types';
+import { MESSAGE_TYPES, MessageType } from '../utils/message-types';
 import { logger } from '../utils/logger';
 
 class ContentScript {
@@ -66,16 +66,6 @@ class ContentScript {
     this.bridge.onMessage(MESSAGE_TYPES.INJECTED_SCRIPT_READY, (payload) => {
       logger.info('Injected Script 已就绪');
       this.sendToDevTools(MESSAGE_TYPES.INJECTED_SCRIPT_READY, payload);
-    });
-
-    // 监听页面信息响应
-    this.bridge.onMessage(MESSAGE_TYPES.PAGE_INFO_RESPONSE, (payload) => {
-      this.sendToDevTools(MESSAGE_TYPES.PAGE_INFO_RESPONSE, payload);
-    });
-
-    // 监听脚本执行结果
-    this.bridge.onMessage(MESSAGE_TYPES.SCRIPT_RESULT, (payload) => {
-      this.sendToDevTools(MESSAGE_TYPES.SCRIPT_RESULT, payload);
     });
 
     // 监听事件捕获
@@ -157,9 +147,9 @@ class ContentScript {
   /**
    * 判断消息是否需要响应
    */
-  private needsResponse(messageType: string): boolean {
-    const responseTypes: string[] = [
-      MESSAGE_TYPES.EXECUTE_SCRIPT,
+  private needsResponse(messageType: MessageType): boolean {
+    const responseTypes: MessageType[] = [
+      
     ];
     return responseTypes.includes(messageType);
   }
@@ -169,7 +159,7 @@ class ContentScript {
    * 注意：Chrome 会自动在接收端的 sender 对象中包含 tab.id
    * DevTools 端会根据 sender.tab.id 过滤消息
    */
-  private sendToDevTools(type: string, payload?: any) {
+  private sendToDevTools(type: MessageType, payload?: any) {
     try {
       chrome.runtime.sendMessage({
         type,

@@ -5,7 +5,7 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { DevToolsBridge, initDevToolsBridge } from '../../utils/devtools-bridge';
-import { MESSAGE_TYPES } from '../../utils/message-types';
+import { MESSAGE_TYPES, MessageType } from '../../utils/message-types';
 import { logger } from '../../utils/logger';
 
 export interface UseDevToolsBridgeResult {
@@ -13,10 +13,10 @@ export interface UseDevToolsBridgeResult {
   isReady: boolean;
   isContentScriptReady: boolean;
   isInjectedScriptReady: boolean;
-  sendToContent: <T = any, R = any>(type: string, payload?: T) => Promise<R>;
-  sendToInjected: <T = any, R = any>(type: string, payload?: T) => Promise<R>;
-  onMessage: <T = any>(type: string, handler: (payload: T) => void) => void;
-  offMessage: (type: string) => void;
+  sendToContent: <T = any, R = any>(type: MessageType, payload?: T) => Promise<R>;
+  sendToInjected: <T = any, R = any>(type: MessageType, payload?: T) => Promise<R>;
+  onMessage: <T = any>(type: MessageType, handler: (payload: T) => void) => void;
+  offMessage: (type: MessageType) => void;
 }
 
 export function useDevToolsBridge(): UseDevToolsBridgeResult {
@@ -74,7 +74,7 @@ export function useDevToolsBridge(): UseDevToolsBridgeResult {
   }, []);
 
   const sendToContent = useCallback(
-    async <T = any, R = any>(type: string, payload?: T): Promise<R> => {
+    async <T = any, R = any>(type: MessageType, payload?: T): Promise<R> => {
       if (!bridge) {
         throw new Error('Bridge 未初始化');
       }
@@ -84,7 +84,7 @@ export function useDevToolsBridge(): UseDevToolsBridgeResult {
   );
 
   const sendToInjected = useCallback(
-    async <T = any, R = any>(type: string, payload?: T): Promise<R> => {
+    async <T = any, R = any>(type: MessageType, payload?: T): Promise<R> => {
       if (!bridge) {
         throw new Error('Bridge 未初始化');
       }
@@ -94,7 +94,7 @@ export function useDevToolsBridge(): UseDevToolsBridgeResult {
   );
 
   const onMessage = useCallback(
-    <T = any>(type: string, handler: (payload: T) => void) => {
+    <T = any>(type: MessageType, handler: (payload: T) => void) => {
       if (!bridge) {
         logger.warn('Bridge 未初始化，无法注册消息监听');
         return;
@@ -105,7 +105,7 @@ export function useDevToolsBridge(): UseDevToolsBridgeResult {
   );
 
   const offMessage = useCallback(
-    (type: string) => {
+    (type: MessageType) => {
       if (!bridge) return;
       bridge.offMessage(type);
     },

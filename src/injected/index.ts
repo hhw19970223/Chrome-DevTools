@@ -4,15 +4,18 @@
  */
 
 import { InjectedScriptBridge } from '../utils/bridge';
-import { MESSAGE_TYPES, ScriptExecutionPayload, ScriptResultPayload } from '../utils/message-types';
+import { MESSAGE_TYPES } from '../utils/message-types';
+import { Figma } from './figma';
 
 class InjectedScript {
   private bridge: InjectedScriptBridge;
   private eventListeners: Map<string, EventListener> = new Map();
+  private figma: Figma
 
   constructor() {
     this.bridge = new InjectedScriptBridge();
     this.init();
+    this.figma = new Figma();
   }
 
   private init() {
@@ -46,27 +49,6 @@ class InjectedScript {
     this.bridge.onMessage(MESSAGE_TYPES.PING, () => {
       return { type: MESSAGE_TYPES.PONG, timestamp: Date.now() };
     });
-  }
-
-  /**
-   * 执行脚本
-   */
-  private executeScript(payload: ScriptExecutionPayload): ScriptResultPayload {
-    try {
-      // 使用 eval 在页面上下文中执行代码
-      // 注意：这里要小心处理，确保安全性
-      const result = eval(payload.code);
-      
-      return {
-        success: true,
-        result: this.serializeResult(result),
-      };
-    } catch (error: any) {
-      return {
-        success: false,
-        error: error.message,
-      };
-    }
   }
 
   /**
@@ -158,7 +140,7 @@ class InjectedScript {
    */
   private exposeDebugAPI(): void {
     (window as any).__AGENT_DEBUG__ = {
-      executeScript: (code: string) => this.executeScript({ code }),
+
     };
   }
 }

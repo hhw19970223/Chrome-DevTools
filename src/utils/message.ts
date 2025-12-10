@@ -2,8 +2,11 @@
  * 消息通信工具类 - 封装Chrome Message API
  */
 
+import { MessageType } from "./message-types";
+import mitt, { Emitter, Handler } from 'mitt';
+
 export interface Message<T = any> {
-  type: string;
+  type: MessageType;
   payload?: T;
 }
 
@@ -88,4 +91,30 @@ export class MessageUtil {
   }
 }
 
+
+export class GMitt {
+  private _gMitt: Emitter<any>;
+
+  constructor() {
+    this._gMitt = mitt<any>();
+  }
+
+  public on(
+    event: MessageType,
+    cb: (data: any) => void,
+  ) {
+    this._gMitt.on(event, cb);
+  }
+
+  public off(
+    event: MessageType,
+    cb?: Handler<any>,
+  ) {
+    this._gMitt.off(event, cb);
+  }
+
+  public emit(event: MessageType, data: any) {
+    this._gMitt.emit(event, data);
+  }
+}
 

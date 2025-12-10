@@ -37,12 +37,15 @@ export class DevToolsBridge {
       this.connectionPort = null;
     });
 
-    // 也监听 runtime 消息
-    chrome.runtime.onMessage.addListener((message: DevToolsMessage) => {
-      if (message.target === 'devtools') {
-        this.handleMessage(message);
+    // 也监听 runtime 消息（从 content script 发来的消息）
+    chrome.runtime.onMessage.addListener(
+      (message: DevToolsMessage, sender: chrome.runtime.MessageSender) => {
+        // 只处理目标为 devtools 且来自当前标签页的消息
+        if (message.target === 'devtools' && sender.tab?.id === this.tabId) {
+          this.handleMessage(message);
+        }
       }
-    });
+    );
   }
 
   private handleMessage(message: DevToolsMessage) {

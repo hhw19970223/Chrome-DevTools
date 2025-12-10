@@ -4,7 +4,7 @@
  */
 
 import { InjectedScriptBridge } from '../utils/bridge';
-import { MESSAGE_TYPES, PageInfo, ScriptExecutionPayload, ScriptResultPayload } from '../utils/message-types';
+import { MESSAGE_TYPES, ScriptExecutionPayload, ScriptResultPayload } from '../utils/message-types';
 
 class InjectedScript {
   private bridge: InjectedScriptBridge;
@@ -32,29 +32,6 @@ class InjectedScript {
    * 设置消息处理器
    */
   private setupMessageHandlers() {
-    // 获取页面信息
-    this.bridge.onMessage<void, PageInfo>(MESSAGE_TYPES.GET_PAGE_INFO, () => {
-      return this.getPageInfo();
-    });
-
-    // 执行脚本
-    this.bridge.onMessage<ScriptExecutionPayload, ScriptResultPayload>(
-      MESSAGE_TYPES.EXECUTE_SCRIPT,
-      (payload) => {
-        return this.executeScript(payload);
-      }
-    );
-
-    // 查询元素
-    this.bridge.onMessage<string, any>(MESSAGE_TYPES.QUERY_ELEMENT, (selector) => {
-      return this.queryElement(selector);
-    });
-
-    // 高亮元素
-    this.bridge.onMessage<string, void>(MESSAGE_TYPES.HIGHLIGHT_ELEMENT, (selector) => {
-      this.highlightElement(selector);
-    });
-
     // 开始监听事件
     this.bridge.onMessage<string, void>(MESSAGE_TYPES.START_LISTENING, (eventType) => {
       this.startListening(eventType);
@@ -69,20 +46,6 @@ class InjectedScript {
     this.bridge.onMessage(MESSAGE_TYPES.PING, () => {
       return { type: MESSAGE_TYPES.PONG, timestamp: Date.now() };
     });
-  }
-
-  /**
-   * 获取页面信息
-   */
-  private getPageInfo(): PageInfo {
-    return {
-      url: window.location.href,
-      title: document.title,
-      width: window.innerWidth,
-      height: window.innerHeight,
-      userAgent: navigator.userAgent,
-      timestamp: Date.now(),
-    };
   }
 
   /**
@@ -131,74 +94,6 @@ class InjectedScript {
       return result;
     } catch {
       return String(result);
-    }
-  }
-
-  /**
-   * 查询元素
-   */
-  private queryElement(selector: string): any {
-    try {
-      const element = document.querySelector(selector);
-      
-      if (!element) {
-        return { found: false };
-      }
-
-      const rect = element.getBoundingClientRect();
-      
-      return {
-        found: true,
-        tagName: element.tagName,
-        id: element.id,
-        className: element.className,
-        textContent: element.textContent?.substring(0, 100),
-        attributes: this.getAttributes(element),
-        boundingRect: {
-          top: rect.top,
-          left: rect.left,
-          width: rect.width,
-          height: rect.height,
-        },
-      };
-    } catch (error: any) {
-      return { found: false, error: error.message };
-    }
-  }
-
-  /**
-   * 获取元素属性
-   */
-  private getAttributes(element: Element): Record<string, string> {
-    const attrs: Record<string, string> = {};
-    for (let i = 0; i < element.attributes.length; i++) {
-      const attr = element.attributes[i];
-      attrs[attr.name] = attr.value;
-    }
-    return attrs;
-  }
-
-  /**
-   * 高亮元素
-   */
-  private highlightElement(selector: string): void {
-    try {
-      const element = document.querySelector(selector);
-      
-      if (!element) {
-        return;
-      }
-
-      // 添加高亮样式
-      const originalOutline = (element as HTMLElement).style.outline;
-      (element as HTMLElement).style.outline = '2px solid #ff0000';
-
-      // 3秒后移除高亮
-      setTimeout(() => {
-        (element as HTMLElement).style.outline = originalOutline;
-      }, 3000);
-    } catch (error) {
-      console.error('高亮元素失败:', error);
     }
   }
 
@@ -263,8 +158,6 @@ class InjectedScript {
    */
   private exposeDebugAPI(): void {
     (window as any).__AGENT_DEBUG__ = {
-      getPageInfo: () => this.getPageInfo(),
-      queryElement: (selector: string) => this.queryElement(selector),
       executeScript: (code: string) => this.executeScript({ code }),
     };
   }

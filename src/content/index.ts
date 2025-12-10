@@ -121,15 +121,6 @@ class ContentScript {
         sendResponse({ type: MESSAGE_TYPES.PONG, timestamp: Date.now() });
         break;
 
-      case MESSAGE_TYPES.GET_PAGE_INFO:
-        // 获取基本页面信息（Content Script 层面）
-        sendResponse({
-          url: window.location.href,
-          title: document.title,
-          readyState: document.readyState,
-        });
-        break;
-
       default:
         logger.warn('未处理的消息类型:', message.type);
         sendResponse({ error: '未知消息类型' });
@@ -168,8 +159,6 @@ class ContentScript {
    */
   private needsResponse(messageType: string): boolean {
     const responseTypes: string[] = [
-      MESSAGE_TYPES.GET_PAGE_INFO,
-      MESSAGE_TYPES.QUERY_ELEMENT,
       MESSAGE_TYPES.EXECUTE_SCRIPT,
     ];
     return responseTypes.includes(messageType);
@@ -177,6 +166,8 @@ class ContentScript {
 
   /**
    * 发送消息到 DevTools
+   * 注意：Chrome 会自动在接收端的 sender 对象中包含 tab.id
+   * DevTools 端会根据 sender.tab.id 过滤消息
    */
   private sendToDevTools(type: string, payload?: any) {
     try {

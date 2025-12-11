@@ -167,6 +167,18 @@ export class InjectedScriptBridge {
     window.postMessage(message, '*');
   }
 
+   /**
+   * 发送消息到 Content Script
+   */
+   postToDevTool<T = any>(type: MessageType, payload?: T): void {
+    const message: BridgeMessage<T> = {
+      source: 'injected-script',
+      type: 'to-devtool',
+      payload: { type, payload } as any,
+    };
+    window.postMessage(message, '*');
+  }
+
   /**
    * 响应请求
    */

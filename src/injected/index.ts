@@ -5,17 +5,20 @@
 
 import { InjectedScriptBridge } from '../utils/bridge';
 import { MESSAGE_TYPES } from '../utils/message-types';
-import { Figma } from './figma';
+import { FigmaCtrl } from './figma';
+
+window.hhw = {};
 
 class InjectedScript {
-  private bridge: InjectedScriptBridge;
-  private eventListeners: Map<string, EventListener> = new Map();
-  private figma: Figma
+  private _bridge: InjectedScriptBridge;
+  private _eventListeners: Map<string, EventListener> = new Map();
+  private _figmaCtrl: FigmaCtrl;
 
   constructor() {
-    this.bridge = new InjectedScriptBridge();
+    this._bridge = new InjectedScriptBridge();
     this.init();
-    this.figma = new Figma();
+    this._figmaCtrl = new FigmaCtrl(this._bridge);
+    window.hhw.figmaCtrl = this._figmaCtrl;
   }
 
   private init() {
@@ -25,7 +28,7 @@ class InjectedScript {
     this.setupMessageHandlers();
 
     // 通知 Content Script 已就绪
-    this.notifyReady();
+    this._notifyReady();
 
     // 在 window 上暴露一些调试方法（可选）
     this.exposeDebugAPI();
@@ -36,86 +39,58 @@ class InjectedScript {
    */
   private setupMessageHandlers() {
     // 开始监听事件
-    this.bridge.onMessage<string, void>(MESSAGE_TYPES.START_LISTENING, (eventType) => {
-      this.startListening(eventType);
+    this._bridge.onMessage<string, void>(MESSAGE_TYPES.START_LISTENING, (eventType) => {
+      this._startListening(eventType);
     });
 
     // 停止监听事件
-    this.bridge.onMessage<string, void>(MESSAGE_TYPES.STOP_LISTENING, (eventType) => {
-      this.stopListening(eventType);
+    this._bridge.onMessage<string, void>(MESSAGE_TYPES.STOP_LISTENING, (eventType) => {
+      this._stopListening(eventType);
     });
 
     // Ping-Pong
-    this.bridge.onMessage(MESSAGE_TYPES.PING, () => {
+    this._bridge.onMessage(MESSAGE_TYPES.PING, () => {
       return { type: MESSAGE_TYPES.PONG, timestamp: Date.now() };
     });
   }
 
   /**
-   * 序列化执行结果（处理不可序列化的对象）
-   */
-  private serializeResult(result: any): any {
-    if (result === undefined) return 'undefined';
-    if (result === null) return null;
-    if (typeof result === 'function') return result.toString();
-    if (result instanceof Error) return { error: result.message, stack: result.stack };
-    
-    // 对于 DOM 元素，返回简化信息
-    if (result instanceof Element) {
-      return {
-        tagName: result.tagName,
-        id: result.id,
-        className: result.className,
-        textContent: result.textContent?.substring(0, 100),
-      };
-    }
-
-    // 对于对象和数组，尝试 JSON 序列化
-    try {
-      JSON.stringify(result);
-      return result;
-    } catch {
-      return String(result);
-    }
-  }
-
-  /**
    * 开始监听事件
    */
-  private startListening(eventType: string): void {
-    if (this.eventListeners.has(eventType)) {
+  private _startListening(eventType: string): void {
+    if (this._eventListeners.has(eventType)) {
       return;
     }
 
     const listener = (event: Event) => {
-      this.bridge.postToContent(MESSAGE_TYPES.EVENT_CAPTURED, {
+      this._bridge.postToContent(MESSAGE_TYPES.EVENT_CAPTURED, {
         eventType,
         target: (event.target as Element)?.tagName || 'unknown',
         timestamp: Date.now(),
-        data: this.serializeEvent(event),
+        data: this._serializeEvent(event),
       });
     };
 
-    this.eventListeners.set(eventType, listener);
+    this._eventListeners.set(eventType, listener);
     document.addEventListener(eventType, listener, true);
   }
 
   /**
    * 停止监听事件
    */
-  private stopListening(eventType: string): void {
-    const listener = this.eventListeners.get(eventType);
+  private _stopListening(eventType: string): void {
+    const listener = this._eventListeners.get(eventType);
     
     if (listener) {
       document.removeEventListener(eventType, listener, true);
-      this.eventListeners.delete(eventType);
+      this._eventListeners.delete(eventType);
     }
   }
 
   /**
    * 序列化事件对象
    */
-  private serializeEvent(event: Event): any {
+  private _serializeEvent(event: Event): any {
     return {
       type: event.type,
       timeStamp: event.timeStamp,
@@ -128,8 +103,8 @@ class InjectedScript {
   /**
    * 通知 Content Script 已就绪
    */
-  private notifyReady(): void {
-    this.bridge.postToContent(MESSAGE_TYPES.INJECTED_SCRIPT_READY, {
+  private _notifyReady(): void {
+    this._bridge.postToContent(MESSAGE_TYPES.INJECTED_SCRIPT_READY, {
       timestamp: Date.now(),
       url: window.location.href,
     });

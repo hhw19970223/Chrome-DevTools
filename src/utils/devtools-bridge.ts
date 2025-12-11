@@ -154,23 +154,85 @@ export class DevToolsBridge {
     }
     this.messageHandlers.clear();
   }
+
+  /**
+   * 在被检查页面的 window 上下文中执行代码
+   * @param expression 要执行的 JavaScript 表达式或代码
+   * @param options 可选配置
+   * @returns Promise，包含执行结果和可能的异常信息
+   */
+  evalInWindow<T = any>(
+    expression: string,
+    options?: chrome.devtools.inspectedWindow.EvalOptions
+  ): Promise<{ result: T; isException: boolean; exceptionInfo?: any }> {
+    return new Promise((resolve, reject) => {
+      chrome.devtools.inspectedWindow.eval(
+        expression,
+        options,
+        (result: any, exceptionInfo: any) => {
+          console.log(exceptionInfo, result);
+          resolve(result);
+        }
+      );
+    });
+  }
+
+  /**
+   * 在被检查页面的 window 上下文中调用函数
+   * @param functionName window 对象上的函数名（支持链式调用，如 'console.log'）
+   * @param args 函数参数数组
+   * @returns Promise，包含函数执行结果
+   */
+  async callWindowFunction<T = any>(
+    functionName: string,
+    ...args: any[]
+  ): Promise<any> {
+    // 将参数转换为 JSON 字符串，然后构建调用表达式
+    const argsStr = args.map((arg) => JSON.stringify(arg)).join(', ');
+    const expression = `${functionName}(${argsStr})`;
+    
+    return this.evalInWindow<T>(expression);
+  }
+
+  /**
+   * 获取 window 对象上的属性值
+   * @param propertyPath 属性路径（支持链式访问，如 'location.href'）
+   * @returns Promise，包含属性值
+   */
+  async getWindowProperty<T = any>(
+    propertyPath: string
+  ): Promise<any> {
+    return this.evalInWindow<T>(propertyPath);
+  }
+
+  /**
+   * 设置 window 对象上的属性值
+   * @param propertyPath 属性路径
+   * @param value 要设置的值
+   * @returns Promise，包含设置结果
+   */
+  async setWindowProperty(
+    propertyPath: string,
+    value: any
+  ): Promise<any> {
+    const valueStr = JSON.stringify(value);
+    const expression = `${propertyPath} = ${valueStr}`;
+    
+    return this.evalInWindow(expression);
+  }
 }
 
 /**
  * 初始化 DevTools Bridge
  */
-export function initDevToolsBridge(): Promise<DevToolsBridge> {
-  return new Promise((resolve, reject) => {
-    chrome.devtools.inspectedWindow.tabId;
-    const tabId = chrome.devtools.inspectedWindow.tabId;
+export function initDevToolsBridge(): DevToolsBridge | undefined {
+  const tabId = chrome.devtools.inspectedWindow.tabId;
     
-    if (!tabId) {
-      reject(new Error('无法获取 Tab ID'));
-      return;
-    }
+  if (!tabId) {
+    return;
+  }
 
-    const bridge = new DevToolsBridge(tabId);
-    resolve(bridge);
-  });
+  const bridge = new DevToolsBridge(tabId);
+  return bridge;
 }
 

@@ -1,22 +1,18 @@
-import { Container, Stack, Card, Tabs } from "@mantine/core";
+import { Container, Stack, Tabs } from "@mantine/core";
 import { IconBrandFigma } from '@tabler/icons-react';
 import { Figma } from "./feature/figma";
 
 function App() {
   return (
-    <Container size="lg" py="md">
+    <Container size="lg" py="md" maw="100%">
       <Stack gap="md">
         <Tabs defaultValue="figma" color="green" >
           <Tabs.List>
-            <Tabs.Tab value="figma" leftSection={<IconBrandFigma size={16} />}>figma</Tabs.Tab>
+            <Tabs.Tab value="figma" leftSection={<IconBrandFigma size={16} />}>Figma</Tabs.Tab>
           </Tabs.List>
 
-          <Tabs.Panel value="page" pt="md">
-            <Card shadow="sm" padding="md" radius="md" withBorder>
-              <Stack gap="md">
-                <Figma />
-              </Stack>
-            </Card>
+          <Tabs.Panel value="figma" pt="md">
+            <Figma />
           </Tabs.Panel>
         </Tabs>
       </Stack>

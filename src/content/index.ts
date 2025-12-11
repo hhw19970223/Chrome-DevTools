@@ -77,6 +77,11 @@ class ContentScript {
     this.bridge.onMessage(MESSAGE_TYPES.DATA_UPDATED, (payload) => {
       this.sendToDevTools(MESSAGE_TYPES.DATA_UPDATED, payload);
     });
+
+    // 转发给devTool
+    this.bridge.onMessage('to-devtool' as MessageType, (payload) => {
+      this.sendToDevTools(payload.type as MessageType, payload.payload);
+    })
   }
 
   /**

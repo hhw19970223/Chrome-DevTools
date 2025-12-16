@@ -35,6 +35,27 @@ function copyStaticFiles() {
         });
         console.log('✓ 已复制图标文件夹');
       }
+
+      // 复制 Monaco Editor worker 文件
+      const monacoWorkers = [
+        'node_modules/monaco-editor/esm/vs/editor/editor.worker.js',
+        'node_modules/monaco-editor/esm/vs/language/json/json.worker.js',
+        'node_modules/monaco-editor/esm/vs/language/css/css.worker.js',
+        'node_modules/monaco-editor/esm/vs/language/html/html.worker.js',
+        'node_modules/monaco-editor/esm/vs/language/typescript/ts.worker.js',
+      ];
+      
+      if (!existsSync('dist/monaco-workers')) {
+        mkdirSync('dist/monaco-workers', { recursive: true });
+      }
+      
+      monacoWorkers.forEach((workerPath) => {
+        if (existsSync(workerPath)) {
+          const fileName = workerPath.split('/').pop();
+          copyFileSync(workerPath, `dist/monaco-workers/${fileName}`);
+          console.log(`✓ 已复制 Monaco worker: ${fileName}`);
+        }
+      });
     },
   };
 }

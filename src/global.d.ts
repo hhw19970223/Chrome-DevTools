@@ -1,3 +1,5 @@
+import "@figma/plugin-typings";
+
 declare global {
   interface Window {
     figma: any;

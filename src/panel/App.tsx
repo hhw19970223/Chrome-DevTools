@@ -4,7 +4,7 @@ import { Figma } from "./feature/figma";
 
 function App() {
   return (
-    <Container size="lg" py="md" maw="100%">
+    <Container size="lg" py="md" maw="100%" h={'100vh'}>
       <Stack gap="md">
         <Tabs defaultValue="figma" color="green" >
           <Tabs.List>

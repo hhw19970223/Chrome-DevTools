@@ -16,21 +16,21 @@ interface HTMLNode {
  */
 function getHTMLTag(nodeType: string): string {
   const tagMap: Record<string, string> = {
-    FRAME: 'div',
-    GROUP: 'div',
-    TEXT: 'span',
-    RECTANGLE: 'div',
-    ELLIPSE: 'div',
-    POLYGON: 'div',
-    STAR: 'div',
-    VECTOR: 'svg',
-    BOOLEAN_OPERATION: 'div',
-    COMPONENT: 'div',
-    INSTANCE: 'div',
-    SLICE: 'div',
-    LINE: 'div',
+    FRAME: "div",
+    GROUP: "div",
+    TEXT: "span",
+    RECTANGLE: "div",
+    ELLIPSE: "div",
+    POLYGON: "div",
+    STAR: "div",
+    VECTOR: "svg",
+    BOOLEAN_OPERATION: "div",
+    COMPONENT: "div",
+    INSTANCE: "div",
+    SLICE: "div",
+    LINE: "div",
   };
-  return tagMap[nodeType] || 'div';
+  return tagMap[nodeType] || "div";
 }
 
 /**
@@ -38,19 +38,22 @@ function getHTMLTag(nodeType: string): string {
  */
 function stylesToString(styles: Record<string, string>): string {
   return Object.entries(styles)
+    .filter(([key]) => key !== "fontFamily" && key !== "font-family") // 过滤掉 font-family 属性
     .map(([key, value]) => {
       // 将 camelCase 转换为 kebab-case
-      const kebabKey = key.replace(/([A-Z])/g, '-$1').toLowerCase();
-      return `${kebabKey}: ${value}`;
+      const kebabKey = key.replace(/([A-Z])/g, "-$1").toLowerCase();
+      // 转义双引号，防止 HTML 属性提前闭合
+      const escapedValue = value.replace(/"/g, "&quot;");
+      return `${kebabKey}: ${escapedValue}`;
     })
-    .join('; ');
+    .join("; ");
 }
 
 /**
  * 处理文本节点
  */
 function getTextContent(node: SceneNode): string | undefined {
-  if (node.type === 'TEXT' && 'characters' in node) {
+  if (node.type === "TEXT" && "characters" in node) {
     return node.characters;
   }
   return undefined;
@@ -62,14 +65,14 @@ function getTextContent(node: SceneNode): string | undefined {
  */
 function getNodeAttributes(_node: SceneNode): Record<string, string> {
   const attrs: Record<string, string> = {};
-  
+
   // 不生成 class 属性，所有样式都通过内联 CSS（style 属性）的方式设置
   // 样式通过 convertNodeToHTML 中的 getCSSAsync() 获取并内联到 style 属性中
-  
+
   // // 添加 data 属性（可选）
   // attrs['data-figma-type'] = _node.type;
   // attrs['data-figma-id'] = _node.id;
-  
+
   return attrs;
 }
 
@@ -83,28 +86,28 @@ async function convertNodeToHTML(
   const tag = getHTMLTag(node.type);
   const attributes = getNodeAttributes(node);
   const text = getTextContent(node);
-  
+
   let styles: Record<string, string> = {};
-  
+
   // 获取 CSS 样式
-  if (includeStyles && 'getCSSAsync' in node) {
+  if (includeStyles && "getCSSAsync" in node) {
     try {
       const css = await (node as any).getCSSAsync();
-      styles = css || {};
+      styles = replaceVar(css || {});
     } catch (error) {
       console.warn(`无法获取节点 ${node.name} 的 CSS:`, error);
     }
   }
-  
+
   // 处理子节点
   const children: HTMLNode[] = [];
-  if ('children' in node && node.children) {
+  if ("children" in node && node.children) {
     for (const child of node.children) {
       const childHTML = await convertNodeToHTML(child, includeStyles);
       children.push(childHTML);
     }
   }
-  
+
   return {
     tag,
     attributes,
@@ -118,36 +121,37 @@ async function convertNodeToHTML(
  * 将 HTML 节点对象转换为 HTML 字符串
  */
 function htmlNodeToString(node: HTMLNode, indent: number = 0): string {
-  const indentStr = '  '.repeat(indent);
+  const indentStr = "  ".repeat(indent);
   const attrsStr = Object.entries(node.attributes)
     .map(([key, value]) => `${key}="${value}"`)
-    .join(' ');
-  
-  const styleStr = Object.keys(node.styles).length > 0
-    ? ` style="${stylesToString(node.styles)}"`
-    : '';
-  
-  const openTag = `<${node.tag}${attrsStr ? ' ' + attrsStr : ''}${styleStr}>`;
-  
+    .join(" ");
+
+  const styleStr =
+    Object.keys(node.styles).length > 0
+      ? ` style="${stylesToString(node.styles)}"`
+      : "";
+
+  const openTag = `<${node.tag}${attrsStr ? " " + attrsStr : ""}${styleStr}>`;
+
   // 如果有文本内容且没有子节点，使用文本内容
   if (node.text !== undefined && node.children.length === 0) {
     return `${indentStr}${openTag}${node.text}</${node.tag}>`;
   }
-  
+
   // 如果有子节点
   if (node.children.length > 0) {
     const childrenHTML = node.children
-      .map(child => htmlNodeToString(child, indent + 1))
-      .join('\n');
-    
+      .map((child) => htmlNodeToString(child, indent + 1))
+      .join("\n");
+
     // 如果有文本内容，也包含进去
-    const content = node.text 
+    const content = node.text
       ? `\n${indentStr}  ${node.text}\n${childrenHTML}`
       : `\n${childrenHTML}\n${indentStr}`;
-    
+
     return `${indentStr}${openTag}${content}</${node.tag}>`;
   }
-  
+
   // 自闭合标签或空标签
   return `${indentStr}${openTag}</${node.tag}>`;
 }
@@ -157,9 +161,13 @@ function htmlNodeToString(node: HTMLNode, indent: number = 0): string {
  */
 function htmlNodeToDOM(node: HTMLNode): HTMLElement | Text {
   // 如果是文本节点
-  if (node.text !== undefined && node.children.length === 0 && node.tag === 'span') {
+  if (
+    node.text !== undefined &&
+    node.children.length === 0 &&
+    node.tag === "span"
+  ) {
     const textNode = document.createTextNode(node.text);
-    const span = document.createElement('span');
+    const span = document.createElement("span");
     Object.entries(node.attributes).forEach(([key, value]) => {
       span.setAttribute(key, value);
     });
@@ -169,30 +177,30 @@ function htmlNodeToDOM(node: HTMLNode): HTMLElement | Text {
     span.appendChild(textNode);
     return span;
   }
-  
+
   const element = document.createElement(node.tag);
-  
+
   // 设置属性
   Object.entries(node.attributes).forEach(([key, value]) => {
     element.setAttribute(key, value);
   });
-  
+
   // 设置样式
   Object.entries(node.styles).forEach(([key, value]) => {
     (element.style as any)[key] = value;
   });
-  
+
   // 添加文本内容
   if (node.text !== undefined) {
     element.appendChild(document.createTextNode(node.text));
   }
-  
+
   // 递归添加子节点
-  node.children.forEach(child => {
+  node.children.forEach((child) => {
     const childElement = htmlNodeToDOM(child);
     element.appendChild(childElement);
   });
-  
+
   return element;
 }
 
@@ -206,38 +214,35 @@ export async function figmaNodeToHTML(
   node: SceneNode,
   options: {
     includeStyles?: boolean;
-    format?: 'string' | 'dom' | 'both';
+    format?: "string" | "dom" | "both";
   } = {}
 ): Promise<{
   html: string;
   element?: HTMLElement;
   ast: HTMLNode;
 }> {
-  const {
-    includeStyles = true,
-    format = 'both',
-  } = options;
-  
+  const { includeStyles = true, format = "both" } = options;
+
   // 转换为 HTML AST
   const ast = await convertNodeToHTML(node, includeStyles);
-  
+
   // 生成 HTML 字符串
   const html = htmlNodeToString(ast);
-  
+
   // 如果需要 DOM 元素
   let element: HTMLElement | undefined;
-  if (format === 'dom' || format === 'both') {
+  if (format === "dom" || format === "both") {
     const domElement = htmlNodeToDOM(ast);
     if (domElement instanceof HTMLElement) {
       element = domElement;
     } else {
       // 如果根节点是文本，包装在 div 中
-      const wrapper = document.createElement('div');
+      const wrapper = document.createElement("div");
       wrapper.appendChild(domElement);
       element = wrapper;
     }
   }
-  
+
   return {
     html,
     element,
@@ -252,7 +257,7 @@ export async function getSelectedNodeHTML(
   figma: PluginAPI,
   options?: {
     includeStyles?: boolean;
-    format?: 'string' | 'dom' | 'both';
+    format?: "string" | "dom" | "both";
   }
 ): Promise<{
   html: string;
@@ -260,11 +265,11 @@ export async function getSelectedNodeHTML(
   ast: HTMLNode;
 } | null> {
   const selection = figma.currentPage.selection;
-  
+
   if (selection.length === 0) {
     return null;
   }
-  
+
   // 处理第一个选中的节点
   const node = selection[0];
   return await figmaNodeToHTML(node, options);
@@ -277,19 +282,44 @@ export async function getAllSelectedNodesHTML(
   figma: PluginAPI,
   options?: {
     includeStyles?: boolean;
-    format?: 'string' | 'dom' | 'both';
+    format?: "string" | "dom" | "both";
   }
-): Promise<Array<{
-  html: string;
-  element?: HTMLElement;
-  ast: HTMLNode;
-}>> {
+): Promise<
+  Array<{
+    html: string;
+    element?: HTMLElement;
+    ast: HTMLNode;
+  }>
+> {
   const selection = figma.currentPage.selection;
-  
+
   const results = await Promise.all(
-    selection.map(node => figmaNodeToHTML(node, options))
+    selection.map((node) => figmaNodeToHTML(node, options))
   );
-  
+
   return results;
 }
 
+function replaceVar(css: any) {
+  try {
+    console.log(css);
+    const collections = figma.variables.getLocalVariableCollections();
+
+    for (const collection of collections) {
+      console.log("Collection:", collection.name);
+
+      for (const variableId of collection.variableIds) {
+        const variable = figma.variables.getVariableById(variableId);
+
+        console.log({
+          name: variable?.name, // --color/primary
+          type: variable?.resolvedType, // COLOR | FLOAT | STRING
+          values: variable?.valuesByMode, // 各 mode 的值
+        });
+      }
+    }
+    return css;
+  } catch (e) {
+    return css;
+  }
+}

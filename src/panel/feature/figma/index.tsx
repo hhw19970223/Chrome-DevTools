@@ -1,15 +1,22 @@
 import { useDevToolsBridge } from "@/panel/hooks/useDevToolsBridge";
 import { MESSAGE_TYPES } from "@/utils";
-import { useEffect, useState } from "react";
-import { Card, Stack, Text } from "@mantine/core";
+import { useEffect, useRef, useState } from "react";
+import { Text, ActionIcon, Tooltip } from "@mantine/core";
+import { IconSparkles } from "@tabler/icons-react";
 import Split from "react-split";
 import { Output } from "./output";
 import { MonacoEditor } from "./monaco-editor";
+import { useChangeCode } from "@/panel/hooks/useChangeCode";
+import { useLoginStore } from "@/panel/hooks/useLoginStore";
 
 export function Figma() {
   const [isDev, setIsDev] = useState<boolean>(false);
   const { onMessage, offMessage, getWindowProperty } = useDevToolsBridge();
-  const [html, setHtml] = useState("");
+  const [code, setCode] = useState("");
+  const [isReact, setIsReact] = useState(false);
+  const { loginInfo } = useLoginStore();
+  const { changeCode, loading } = useChangeCode();
+  const onClose = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     getWindowProperty?.("figma").then((res) => {
@@ -23,7 +30,10 @@ export function Figma() {
 
       if ("selected" in payload) {
         if (payload.selected) {
-          setHtml(payload.html);
+          onClose?.current?.();
+          onClose.current = null;
+          setCode(payload.html);
+          setIsReact(false);
         }
       }
     });
@@ -37,28 +47,62 @@ export function Figma() {
   }, [isDev]);
 
   return isDev ? (
-    <div className="h-[calc(100vh-90px)]">
+    <div className="h-[calc(100vh-90px)] relative">
       <Split
-        sizes={[50, 50]} // 初始宽度比例
+        sizes={[5, 95]} // 初始宽度比例
         minSize={5} // 每个面板最小宽度
         gutterSize={8} // 拖动条宽度
         style={{ display: "flex", height: "100%", width: "100%" }}
       >
         <div className="h-full w-full overflow-hidden relative max-w-full max-h-full">
           <MonacoEditor
-            language={"html"}
-            content={html}
+            language={isReact ? "jsx" : "html"}
+            content={code}
             onChange={(value) => {
-              setHtml(value || "");
+              setCode(value || "");
             }}
           />
         </div>
         <div className="w-full h-full max-h-full overflow-hidden relative bg-[rgba(0,0,0,0.02)]">
           <div className="w-full h-full">
-            <Output code={html} />
+            <Output code={code} isReact={isReact} />
           </div>
         </div>
       </Split>
+      
+      {/* 右下角操作按钮组 */}
+      { loginInfo ? <div
+        style={{
+          position: 'absolute',
+          bottom: '16px',
+          right: '16px',
+          zIndex: 100,
+          display: 'flex',
+          gap: '8px',
+          flexDirection: 'column',
+        }}
+      >
+        <Tooltip label="生成可用代码" position="left">
+          <ActionIcon
+            size="lg"
+            variant="filled"
+            color="grape"
+            radius="xl"
+            disabled={loading}
+            onClick={() => {
+              changeCode(code, (newCode) => {
+                setCode(newCode);
+                setIsReact(true); // 切换到 React 模式
+              }, (_onClose) => {
+                onClose.current = _onClose;
+              });
+            }}
+          >
+            <IconSparkles size={18} />
+          </ActionIcon>
+        </Tooltip>
+      </div>
+      : null}
     </div>
   ) : (
     <div>

@@ -6,6 +6,7 @@ export * from './logger';
 export * from './message';
 export * from './message-types';
 export * from './storage';
+export * from './tabs';
 export * from './dom';
 export * from './bridge';
 export * from './devtools-bridge';

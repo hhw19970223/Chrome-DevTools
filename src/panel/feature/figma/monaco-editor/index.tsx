@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useEffect } from 'react';
 
 import Editor from '@monaco-editor/react';
 import { editor } from 'monaco-editor';
@@ -14,6 +14,16 @@ interface Props {
 export function MonacoEditor({language, content, onChange}: Props) {
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const monacoRef = useRef<any>(null);
+
+  // 组件卸载时销毁编辑器实例，这会自动清理相关的 worker 进程
+  useEffect(() => {
+    return () => {
+      if (editorRef.current) {
+        editorRef.current.dispose();
+        editorRef.current = null;
+      }
+    };
+  }, []);
 
   return (
     <Editor

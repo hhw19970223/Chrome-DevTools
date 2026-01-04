@@ -261,6 +261,209 @@ const div = DOMUtil.createElement('div', {
 });
 ```
 
+## 🎨 Tailwind 动态类名支持
+
+项目中的 `sandbox.html` 支持 Tailwind CSS 动态类名（如 `text-[7px]`、`w-[123px]` 等任意值）。
+
+### 自动扫描
+系统会自动监听 DOM 变化并注入动态样式。**当组件渲染完成后，会自动扫描并生成对应的 CSS 类**，无需手动操作。
+
+### 组件渲染时的自动扫描
+
+每当通过 `postMessage` 动态生成组件时，系统会：
+
+1. ✅ 等待组件渲染完成
+2. ✅ 自动扫描组件中的所有动态类名
+3. ✅ 注入对应的 CSS 样式
+4. ✅ 触发 Tailwind CDN 刷新
+5. ✅ 在控制台显示扫描结果
+
+```javascript
+// 示例：组件渲染后自动扫描
+// 控制台输出：
+// 🔍 [动态样式] 扫描 Tailwind 任意值类名...
+// ✅ [动态样式] 注入了 5 个新样式
+// 📋 [新样式] text-[7px], w-[123px], h-[45px], p-[13px], gap-[8px]
+// 🔄 [Tailwind CDN] 触发刷新
+// ✅ 组件渲染完成 (5 个动态样式, CDN 已刷新)
+```
+
+### 手动扫描 API
+
+如果需要手动控制扫描，可以使用以下函数：
+
+```javascript
+// 🎯 推荐：使用统一的扫描函数
+scanComponentTailwindStyles(element, {
+  verbose: true,        // 显示详细日志
+  showNewStyles: true,  // 显示新注入的样式列表
+  refreshCDN: true      // 触发 CDN 刷新
+})
+// 返回: { customStyles: 5, cdnRefreshed: true, newStyles: [...] }
+
+// 扫描整个页面
+scanComponentTailwindStyles(document.body)
+
+// 只扫描不显示日志（安静模式）
+scanComponentTailwindStyles(element, { verbose: false, showNewStyles: false })
+```
+
+#### 底层 API（高级用法）
+
+在浏览器控制台中可以使用以下底层函数：
+
+```javascript
+// 手动扫描整个页面的动态类名
+scanTailwindClasses()
+// 返回: { total: 10, newStyles: 5 }
+
+// 扫描特定元素
+scanTailwindClasses(document.querySelector('#myDiv'))
+
+// 预注册类名（在渲染前注入样式）
+registerTailwindClasses(['text-[7px]', 'w-[123px]', 'h-[45px]'])
+// 返回: 3 (新增的样式数量)
+
+// 预注册单个类名
+registerTailwindClasses('text-[7px]')
+
+// 触发 Tailwind CDN 重新扫描
+refreshTailwind()
+
+// 暂停自动扫描（性能优化）
+enableAutoTailwindScan(false)
+
+// 恢复自动扫描
+enableAutoTailwindScan(true)
+
+// 清除所有动态样式
+clearDynamicTailwindStyles()
+
+// 查看已生成的样式列表
+getGeneratedTailwindStyles()
+// 返回: ['text-[7px]', 'w-[123px]', ...]
+```
+
+### 支持的动态类名前缀
+
+| 类别 | 前缀 | 示例 | 生成的 CSS |
+|------|------|------|-----------|
+| **文本** | `text` | `text-[7px]` | `font-size: 7px` |
+| | `leading` | `leading-[1.5]` | `line-height: 1.5` |
+| | `tracking` | `tracking-[2px]` | `letter-spacing: 2px` |
+| **宽度** | `w` | `w-[123px]` | `width: 123px` |
+| | `min-w` | `min-w-[100px]` | `min-width: 100px` |
+| | `max-w` | `max-w-[500px]` | `max-width: 500px` |
+| **高度** | `h` | `h-[45px]` | `height: 45px` |
+| | `min-h` | `min-h-[100px]` | `min-height: 100px` |
+| | `max-h` | `max-h-[500px]` | `max-height: 500px` |
+| **内边距** | `p` | `p-[13px]` | `padding: 13px` |
+| | `pt/pr/pb/pl` | `pt-[10px]` | `padding-top: 10px` |
+| | `px/py` | `px-[20px]` | `padding-left/right: 20px` |
+| **外边距** | `m` | `m-[25px]` | `margin: 25px` |
+| | `mt/mr/mb/ml` | `mt-[10px]` | `margin-top: 10px` |
+| | `mx/my` | `mx-[auto]` | `margin-left/right: auto` |
+| **间距** | `gap` | `gap-[8px]` | `gap: 8px` |
+| **颜色** | `bg` | `bg-[#ff6b6b]` | `background-color: #ff6b6b` |
+| | `text` | `text-[rgb(255,0,0)]` | `color: rgb(255,0,0)` |
+| **边框** | `border` | `border-[2px]` | `border-width: 2px` |
+| | `rounded` | `rounded-[12px]` | `border-radius: 12px` |
+| **定位** | `top/left/right/bottom` | `top-[10px]` | `top: 10px` |
+| | `z` | `z-[999]` | `z-index: 999` |
+| **变换** | `opacity` | `opacity-[85]` | `opacity: 0.85` |
+| | `rotate` | `rotate-[45deg]` | `transform: rotate(45deg)` |
+| | `scale` | `scale-[1.5]` | `transform: scale(1.5)` |
+| | `translate-x/y` | `translate-x-[10px]` | `transform: translateX(10px)` |
+
+> 💡 **提示**: 任意值语法支持各种单位（px, rem, em, %, vh, vw 等）和颜色格式（hex, rgb, hsl 等）。
+
+### API 快速参考
+
+| 函数 | 用途 | 返回值 |
+|------|------|--------|
+| `scanComponentTailwindStyles(el, opts)` | 🎯 扫描并注入动态样式（推荐） | `{ customStyles, cdnRefreshed, newStyles }` |
+| `scanTailwindClasses(el)` | 🔍 底层扫描函数 | `{ total, newStyles }` |
+| `registerTailwindClasses(classes)` | 📝 预注册类名 | `number` |
+| `refreshTailwind()` | 🔄 触发 CDN 刷新 | `void` |
+| `enableAutoTailwindScan(bool)` | ⏸️ 控制自动扫描 | `void` |
+| `clearDynamicTailwindStyles()` | 🗑️ 清除所有样式 | `void` |
+| `getGeneratedTailwindStyles()` | 📋 查看已生成样式 | `string[]` |
+
+### 在代码中使用
+
+```tsx
+// 动态类名会自动被识别和注入
+<div className="text-[7px] w-[123px] h-[45px] p-[13px]">
+  自定义尺寸元素
+</div>
+
+// 可以与普通 Tailwind 类混用
+<div className="flex items-center text-[14px] bg-[#f0f0f0] rounded-[8px]">
+  混合使用
+</div>
+
+// 程序化生成的动态类名也支持
+const size = 15;
+<div className={`text-[${size}px]`}>
+  动态生成的类名
+</div>
+```
+
+### 实际案例演示
+
+```tsx
+// 一个使用大量动态类名的组件示例
+export default function CustomCard() {
+  return (
+    <div className="w-[350px] h-[200px] p-[20px] rounded-[16px] bg-[#f8f9fa]">
+      <h2 className="text-[18px] mb-[12px] text-[#333]">
+        自定义卡片
+      </h2>
+      <p className="text-[14px] leading-[1.6] text-[#666]">
+        这个组件使用了大量的任意值类名
+      </p>
+      <button className="mt-[16px] px-[24px] py-[10px] bg-[#007bff] text-[#fff] rounded-[8px]">
+        点击按钮
+      </button>
+    </div>
+  );
+}
+
+// 当这个组件渲染时，控制台会显示：
+// 🔍 [动态样式] 扫描 Tailwind 任意值类名...
+// ✅ [动态样式] 注入了 13 个新样式
+// 📋 [新样式] w-[350px], h-[200px], p-[20px], rounded-[16px], bg-[#f8f9fa], ...
+// ✅ 组件渲染完成 (13 个动态样式, CDN 已刷新)
+```
+
+### 性能优化建议
+
+1. **批量预注册**: 如果知道会用到哪些动态类名，可以提前注册：
+   ```javascript
+   registerTailwindClasses([
+     'text-[7px]', 'text-[8px]', 'text-[9px]',
+     'w-[100px]', 'w-[200px]', 'w-[300px]'
+   ]);
+   ```
+
+2. **关闭自动扫描**: 在大量 DOM 操作时暂停自动扫描，完成后再手动扫描一次：
+   ```javascript
+   enableAutoTailwindScan(false);
+   // ... 执行大量 DOM 操作 ...
+   scanComponentTailwindStyles(document.body);
+   enableAutoTailwindScan(true);
+   ```
+
+3. **安静模式**: 不需要日志时使用安静模式：
+   ```javascript
+   scanComponentTailwindStyles(element, { 
+     verbose: false, 
+     showNewStyles: false 
+   });
+   ```
+
+4. **查看日志**: 打开控制台可以看到样式注入的实时日志，便于调试。
+
 ## 📝 注意事项
 
 1. **开发模式热更新**: 每次修改代码后，需要在 Chrome 扩展页面刷新扩展，并重新打开 DevTools

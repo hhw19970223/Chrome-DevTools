@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLoginStore } from "./useLoginStore";
 import { v4 } from "uuid";
 import { traceparent } from "@/utils/cursor";
@@ -10,6 +10,8 @@ export function useChangeCode() {
   const [status, setStatus] = useState<
   "submitted" | "streaming" | "ready" | "error"
 >("ready");
+
+  const [text, setText] = useState<string>("");
   
   const loading = useMemo(() => status === "streaming", [status]);
 
@@ -53,10 +55,13 @@ export function useChangeCode() {
 
 ## 转换要求：
 1. **HTML 结构转换**：
-   - 将 HTML 转换为 React JSX 语法
+   - 将 HTML 转换为 React TSX 语法
    - class 改为 className
-   - style 属性改为驼峰命名法
-   - 使用语义化标签
+   - style 改为对应的 Tailwind CSS
+   - 不要生成额外的子组件
+   - 参数都在组件内处理，不通过外部传参。 组件内需要使用 useState 管理状态，不要使用 useRef
+   - 在视觉效果上必现百分百还原
+
 
 2. **CSS 变量处理**（重要）：
    - 识别并分析所有 CSS 变量，特别是 Figma 生成的变量（如 --figma-xxx, --color-xxx, --spacing-xxx 等）
@@ -76,12 +81,14 @@ export function useChangeCode() {
 4. **组件化**：
    - 将代码封装为一个独立的 React 函数组件
    - 添加必要的 props 类型定义（使用 TypeScript）
-   - 提取可复用的子组件
+   - 不要生成额外的子组件。
 
 5. **代码质量**：
    - 确保代码格式规范，使用 2 空格缩进
    - 添加必要的注释说明复杂逻辑
    - 确保可读性和可维护性
+
+
 
 ## 输出格式：
 只返回完整的 React 组件代码，不要添加任何额外说明、markdown 标记或代码块符号。
@@ -118,10 +125,14 @@ ${html}`;
           if (data?.message?.streamUnifiedChatResponse) {
             const streamUnifiedChatResponse = data.message.streamUnifiedChatResponse;
             console.log(data.message);
-            console.warn(streamUnifiedChatResponse.text);
+         
 
             if (streamUnifiedChatResponse.text != null) {
+              console.warn(streamUnifiedChatResponse.text);
               console.log(streamUnifiedChatResponse.text);
+              setText((text) => {
+                return text + streamUnifiedChatResponse.text;
+              })
             }
 
             if (streamUnifiedChatResponse.toolCall) {
@@ -201,9 +212,16 @@ ${html}`;
     }
   }, [loading, loginInfo]);
 
+  useEffect(() => {
+    if (!loading) {
+      setText("");
+    }
+  }, [loading])
+
   return {
     changeCode,
     loading,
     status,
+    text
   }
 }  

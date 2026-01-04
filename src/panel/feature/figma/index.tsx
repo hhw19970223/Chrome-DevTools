@@ -8,6 +8,8 @@ import { Output } from "./output";
 import { MonacoEditor } from "./monaco-editor";
 import { useChangeCode } from "@/panel/hooks/useChangeCode";
 import { useLoginStore } from "@/panel/hooks/useLoginStore";
+import { LineBreak } from "@/panel/components/line-break";
+import Loading from "@/panel/components/loading";
 
 export function Figma() {
   const [isDev, setIsDev] = useState<boolean>(false);
@@ -15,7 +17,7 @@ export function Figma() {
   const [code, setCode] = useState("");
   const [isReact, setIsReact] = useState(false);
   const { loginInfo } = useLoginStore();
-  const { changeCode, loading } = useChangeCode();
+  const { changeCode, loading, text } = useChangeCode();
   const onClose = useRef<(() => void) | null>(null);
 
   useEffect(() => {
@@ -56,7 +58,7 @@ export function Figma() {
       >
         <div className="h-full w-full overflow-hidden relative max-w-full max-h-full">
           <MonacoEditor
-            language={isReact ? "jsx" : "html"}
+            language={isReact ? "typescript" : "html"}
             content={code}
             onChange={(value) => {
               setCode(value || "");
@@ -82,7 +84,14 @@ export function Figma() {
           flexDirection: 'column',
         }}
       >
-        <Tooltip label="生成可用代码" position="left">
+        <Tooltip label={ loading ? <div className="flex flex-col gap-4 px-4 py-2 pb-4">
+          <div>
+            <LineBreak text={text} />
+          </div>
+          <div className="flex justify-end px-4">
+            <Loading />
+          </div>
+        </div> : "生成可用代码" } position="left" opened={ loading ? true : undefined }>
           <ActionIcon
             size="lg"
             variant="filled"

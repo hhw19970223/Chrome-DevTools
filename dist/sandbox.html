@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Sandbox</title>
+  <!-- Tailwind CSS for shadcn/ui -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    // 配置 Tailwind 主题以支持 shadcn/ui 的颜色系统
+    tailwind.config = {
+      darkMode: ['class'],
+      theme: {
+        extend: {
+          colors: {
+          },
+          borderRadius: {
+            lg: "0.5rem",
+            md: "calc(0.5rem - 2px)",
+            sm: "calc(0.5rem - 4px)",
+          },
+        }
+      }
+    }
+  </script>
+  
+  <!-- Babel -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  
+  <!-- React -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  
+  <!-- Lucide React Icons -->
+  <script src="https://unpkg.com/lucide-react@latest/dist/umd/lucide-react.js"></script>
+  
+  <!-- clsx 用于 className 合并 -->
+  <script src="https://unpkg.com/clsx@2.0.0/dist/clsx.min.js"></script>
+
+  <style>
+    /* 为 shadcn 组件添加一些基础样式 */
+    * {
+      box-sizing: border-box;
+    }
+    
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+        'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+        sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script>
+    // cn 工具函数 (shadcn/ui 常用)
+    function cn(...inputs) {
+      return clsx(inputs);
+    }
+
+    // 获取所有 lucide-react 图标并创建导入映射
+    const allLucideIcons = typeof lucideReact !== 'undefined' ? lucideReact : {};
+    
+    // 模拟常用的库导入
+    const mockImports = {
+      'react': React,
+      'react-dom': ReactDOM,
+      'react-dom/client': ReactDOM,
+      'lucide-react': allLucideIcons,
+      'clsx': clsx,
+      '@/lib/utils': { cn },
+    };
+
+    // 添加 shadcn 常用的工具函数和组件到全局
+    window.cn = cn;
+    window.LucideIcons = allLucideIcons;
+
+    window.addEventListener('message', (event) => {
+      try {
+        const { code } = event.data;
+        
+        if (!code) {
+          return;
+        }
+      
+
+        // 检查是否有 export default
+        const hasExportDefault = /export\s+default\s+/i.test(code);
+        
+        // 提取 export default 后面的组件名
+        let exportedComponentName = null;
+        const exportDefaultMatch = code.match(/export\s+default\s+(\w+)/i);
+        if (exportDefaultMatch) {
+          exportedComponentName = exportDefaultMatch[1];
+        }
+
+        // 如果没有找到命名的导出，检查是否是内联导出
+        const inlineExportMatch = code.match(/export\s+default\s+(function|const|class)\s+(\w+)/i);
+        if (inlineExportMatch) {
+          exportedComponentName = inlineExportMatch[2];
+        }
+
+        // 【第三步】转换 JSX/TSX 代码为普通 JavaScript，处理 ES6 模块
+        const transformed = Babel.transform(code, {
+          filename: 'virtual.tsx',
+          presets: [
+            'react',
+            'typescript'
+          ],
+          plugins: [
+            // 移除 import 语句的插件
+            function(babel) {
+              const t = babel.types;
+              return {
+                visitor: {
+                  ImportDeclaration(path) {
+                    // 移除 import 语句
+                    path.remove();
+                  },
+                  ExportDefaultDeclaration(path) {
+                    // 将 export default Component 转换为 var __exportDefault = Component
+                    const declaration = path.node.declaration;
+                    if (declaration.type === 'Identifier') {
+                      path.replaceWithMultiple([
+                        t.variableDeclaration('var', [
+                          t.variableDeclarator(
+                            t.identifier('__exportDefault'),
+                            declaration
+                          )
+                        ])
+                      ]);
+                    } else {
+                      // 对于内联导出，如 export default function Component() {}
+                      path.replaceWithMultiple([
+                        declaration,
+                        t.variableDeclaration('var', [
+                          t.variableDeclarator(
+                            t.identifier('__exportDefault'),
+                            declaration.id || declaration
+                          )
+                        ])
+                      ]);
+                    }
+                  },
+                  ExportNamedDeclaration(path) {
+                    // 保留命名导出的声明部分
+                    if (path.node.declaration) {
+                      path.replaceWith(path.node.declaration);
+                    } else {
+                      path.remove();
+                    }
+                  }
+                }
+              };
+            }
+          ]
+        });
+
+        if (!transformed.code) {
+          throw new Error('代码转换失败');
+        }
+
+        console.log('转换后的代码:', transformed.code);
+
+        // 查找组件名称的优先级：
+        // 1. export default 的组件
+        // 2. 最后一个定义的 const/function 组件
+        let componentName = null;
+
+        if (exportedComponentName) {
+          componentName = exportedComponentName;
+        } else if (hasExportDefault) {
+          // 如果有 export default 但没找到名称，使用 __exportDefault
+          componentName = '__exportDefault';
+        } else {
+          // 查找最后一个定义的组件
+          const componentMatch = code.match(/(?:const|function)\s+(\w+)\s*[:=]/g);
+          if (componentMatch && componentMatch.length > 0) {
+            const lastMatch = componentMatch[componentMatch.length - 1];
+            const nameMatch = lastMatch.match(/(?:const|function)\s+(\w+)/);
+            if (nameMatch) {
+              componentName = nameMatch[1];
+            }
+          }
+        }
+
+        if (!componentName) {
+          componentName = '__exportDefault'; // 最后的回退
+        }
+        
+        // 【第四步】准备执行环境，动态注入所需的变量
+        // 提前定义 mockRequire 函数
+        const mockRequire = (moduleName) => {
+          if (mockImports[moduleName]) {
+            return mockImports[moduleName];
+          }
+          
+          console.warn('模块未找到:', moduleName);
+          return {};
+        };
+        
+        // 创建动态参数列表 - 只包含实际导入的内容
+        const functionParams = [
+          'React', 
+          'ReactDOM',
+          'require',
+          'cn'
+        ];
+        
+        const functionArgs = [
+          React, 
+          ReactDOM, 
+          mockRequire,
+          cn
+        ];
+        
+        // 添加 React Hooks（如果代码中导入了）
+        const allReactHooks = {
+          'useState': React.useState,
+          'useEffect': React.useEffect,
+          'useRef': React.useRef,
+          'useMemo': React.useMemo,
+          'useCallback': React.useCallback,
+          'useContext': React.useContext,
+          'useReducer': React.useReducer,
+          'useLayoutEffect': React.useLayoutEffect,
+          'useImperativeHandle': React.useImperativeHandle,
+          'useDebugValue': React.useDebugValue,
+        };
+        
+        // 如果没有显式导入 hooks，添加常用的 hooks
+        const hooksToInclude = ['useState', 'useEffect', 'useRef', 'useMemo', 'useCallback', 'useContext', 'useReducer', 'useLayoutEffect'];
+        
+        hooksToInclude.forEach(hook => {
+          if (allReactHooks[hook]) {
+            functionParams.push(hook);
+            functionArgs.push(allReactHooks[hook]);
+          }
+        });
+      
+        
+        // 【第五步】执行转换后的代码
+        const executeCode = new Function(
+          ...functionParams,
+          `
+          // 解构 React hooks 到作用域
+          const { 
+            createElement,
+            Fragment,
+            forwardRef
+          } = React;
+          
+          ${transformed.code}
+          
+          // 尝试返回组件
+          if (typeof __exportDefault !== 'undefined') {
+            return __exportDefault;
+          } else if (typeof ${componentName} !== 'undefined') {
+            return ${componentName};
+          } else {
+            return null;
+          }
+          `
+        );
+        
+        // 执行代码并传入动态参数
+        const Component = executeCode(...functionArgs);
+
+        if (!Component) {
+          event.source.postMessage({
+            type: 'error',
+            error: '未找到有效的 React 组件'
+          }, event.origin);
+          return;
+        }
+
+        // 渲染组件
+        const root = document.getElementById('root');
+        if (root) {
+          ReactDOM.render(
+            typeof Component === 'function' ? React.createElement(Component) : Component,
+            root
+          );
+          
+          // 触发 Tailwind 重新扫描动态添加的类名
+          // 使用 setTimeout 确保 DOM 已经更新
+          setTimeout(() => {
+            if (window.tailwind && window.tailwind.refresh) {
+              window.tailwind.refresh();
+            }
+          }, 0);
+          
+          event.source.postMessage({
+            type: 'success'
+          }, event.origin);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        event.source.postMessage({
+          type: 'error',
+          error: error.message || String(error)
+        }, event.origin);
+      }
+    });
+
+    // 通知父窗口已准备就绪
+    window.parent.postMessage({ type: 'ready' }, '*');
+  </script>
+</body>
+</html>
+

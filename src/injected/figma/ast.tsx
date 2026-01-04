@@ -3,12 +3,14 @@
  * 将 Figma 选中的节点及其所有子节点转换为 HTML 结构
  */
 
+
 interface HTMLNode {
   tag: string;
   attributes: Record<string, string>;
   styles: Record<string, string>;
   children: HTMLNode[];
   text?: string;
+  svg?: string,
 }
 
 /**
@@ -17,7 +19,7 @@ interface HTMLNode {
 function getHTMLTag(nodeType: string): string {
   const tagMap: Record<string, string> = {
     FRAME: "div",
-    GROUP: "div",
+    GROUP: "svg",
     TEXT: "span",
     RECTANGLE: "div",
     ELLIPSE: "div",
@@ -77,6 +79,86 @@ function getNodeAttributes(_node: SceneNode): Record<string, string> {
 }
 
 /**
+ * 将 Figma 文本段落样式转换为 CSS 样式对象
+ */
+function convertSegmentStylesToCSS(segment: any): Record<string, string> {
+  const styles: Record<string, string> = {};
+
+  // 字体大小
+  if (segment.fontSize !== undefined) {
+    styles.fontSize = `${segment.fontSize}px`;
+  }
+
+  // 字体族
+  if (segment.fontName) {
+    styles.fontFamily = segment.fontName.family;
+    styles.fontWeight = segment.fontName.style.toLowerCase().includes("bold")
+      ? "700"
+      : "400";
+    if (segment.fontName.style.toLowerCase().includes("italic")) {
+      styles.fontStyle = "italic";
+    }
+  }
+
+  // 字重（如果单独指定）
+  if (segment.fontWeight !== undefined) {
+    styles.fontWeight = String(segment.fontWeight);
+  }
+
+  // 文本装饰
+  if (segment.textDecoration) {
+    if (segment.textDecoration === "UNDERLINE") {
+      styles.textDecoration = "underline";
+    } else if (segment.textDecoration === "STRIKETHROUGH") {
+      styles.textDecoration = "line-through";
+    } else if (segment.textDecoration === "NONE") {
+      styles.textDecoration = "none";
+    }
+  }
+
+  // 文本转换
+  if (segment.textCase) {
+    if (segment.textCase === "UPPER") {
+      styles.textTransform = "uppercase";
+    } else if (segment.textCase === "LOWER") {
+      styles.textTransform = "lowercase";
+    } else if (segment.textCase === "TITLE") {
+      styles.textTransform = "capitalize";
+    }
+  }
+
+  // 行高
+  if (segment.lineHeight) {
+    if (segment.lineHeight.unit === "PIXELS") {
+      styles.lineHeight = `${segment.lineHeight.value}px`;
+    } else if (segment.lineHeight.unit === "PERCENT") {
+      styles.lineHeight = `${segment.lineHeight.value}%`;
+    }
+  }
+
+  // 字间距
+  if (segment.letterSpacing) {
+    if (segment.letterSpacing.unit === "PIXELS") {
+      styles.letterSpacing = `${segment.letterSpacing.value}px`;
+    } else if (segment.letterSpacing.unit === "PERCENT") {
+      styles.letterSpacing = `${segment.letterSpacing.value / 100}em`;
+    }
+  }
+
+  // 填充颜色
+  if (segment.fills && segment.fills.length > 0) {
+    const fill = segment.fills[0];
+    if (fill.type === "SOLID" && fill.color) {
+      const { r, g, b } = fill.color;
+      const a = fill.opacity !== undefined ? fill.opacity : 1;
+      styles.color = `rgba(${Math.round(r * 255)}, ${Math.round(g * 255)}, ${Math.round(b * 255)}, ${a})`;
+    }
+  }
+
+  return styles;
+}
+
+/**
  * 递归转换 Figma 节点为 HTML 节点
  */
 async function convertNodeToHTML(
@@ -99,8 +181,85 @@ async function convertNodeToHTML(
     }
   }
 
+  // 特殊处理：如果是 SVG 节点，获取实际的 SVG 内容
+  if (tag === "svg" && "exportAsync" in node) {
+    try {
+      const svgBytes = await (node as any).exportAsync({
+        format: 'SVG',
+        svgOutlineText: false,
+      });
+      const svgString = new TextDecoder().decode(svgBytes);
+      console.log('SVG 内容:', svgString);
+      
+      // 可以选择将 SVG 内容存储在 attributes 或其他地方
+      // 这里暂时记录到控制台，根据需求可以进一步处理
+      return {
+        tag,
+        attributes,
+        styles,
+        children:[],
+        text: undefined,
+        svg: svgString,
+      };
+    } catch (error) {
+      console.warn(`无法导出 SVG 节点 ${node.name}:`, error);
+    }
+  }
+
   // 处理子节点
   const children: HTMLNode[] = [];
+  
+  // 如果是文本节点且包含多种样式，使用 getStyledTextSegments 处理
+  if (node.type === "TEXT" && "getStyledTextSegments" in node && includeStyles) {
+    try {
+      const segments = await (node as any).getStyledTextSegments([
+        "fontSize",
+        "fontName",
+        "fontWeight",
+        "textDecoration",
+        "textCase",
+        "lineHeight",
+        "letterSpacing",
+        "fills",
+        "fillStyleId",
+        "listOptions",
+        "indentation",
+        "hyperlink",
+      ]);
+      
+      // 如果有多个样式段落，将每个段落作为子节点
+      if (segments && segments.length > 1) {
+        for (const segment of segments) {
+          // 直接从 segment 对象中提取样式并转换为 CSS
+          const segmentStyles = convertSegmentStylesToCSS(segment);
+          
+          children.push({
+            tag: "span",
+            attributes: {},
+            styles: segmentStyles,
+            children: [],
+            text: segment.characters,
+          });
+        }
+        
+        // 如果成功处理了文本段落，清空父节点的 text
+        return {
+          tag,
+          attributes,
+          styles,
+          children,
+          text: undefined,
+        };
+      } else if (segments && segments.length === 1) {
+        Object.assign(styles, convertSegmentStylesToCSS(segments[0]));
+      }
+    } catch (error) {
+      console.warn(`无法获取文本段落:`, error);
+      // 如果失败，继续使用原有逻辑
+    }
+  }
+  
+  // 处理普通子节点
   if ("children" in node && node.children) {
     for (const child of node.children) {
       const childHTML = await convertNodeToHTML(child, includeStyles);
@@ -121,7 +280,11 @@ async function convertNodeToHTML(
  * 将 HTML 节点对象转换为 HTML 字符串
  */
 function htmlNodeToString(node: HTMLNode, indent: number = 0): string {
+  
   const indentStr = "  ".repeat(indent);
+  if (node.svg) {
+    return node.svg.split("\n").map((line) => `${indentStr}${line}`).join("\n");
+  }  
   const attrsStr = Object.entries(node.attributes)
     .map(([key, value]) => `${key}="${value}"`)
     .join(" ");

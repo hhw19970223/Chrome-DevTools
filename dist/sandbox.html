@@ -176,8 +176,8 @@
           // 如果有 export default 但没找到名称，使用 __exportDefault
           componentName = '__exportDefault';
         } else {
-          // 优先查找 export function 导出的组件
-          const exportFunctionMatch = code.match(/export\s+function\s+(\w+)/);
+          // 优先查找 export function 或 export const 导出的组件
+          const exportFunctionMatch = code.match(/export\s+(?:function|const)\s+(\w+)/);
           if (exportFunctionMatch) {
             componentName = exportFunctionMatch[1];
           } else {

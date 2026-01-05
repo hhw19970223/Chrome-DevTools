@@ -463,7 +463,7 @@ export async function getAllSelectedNodesHTML(
   return results;
 }
 
-const map: Record<string, string> = {};
+export const map: Record<string, string> = {};
 
 function replaceVar(css: any, boundVariables: any, resolvedVariableModes: any) {
   try {
@@ -542,12 +542,17 @@ function replaceVar(css: any, boundVariables: any, resolvedVariableModes: any) {
           css[key] = map[css[key]];
         }
       }
-      varValue =  css[key];
+      varValue = css[key];
       if (varValue.includes('var(')) {
+        css[key] = css[key].replace(
+          /var\(\s*[^,]+,\s*([^)]+)\s*\)/g,
+          "$1"
+        )
+        
         const arr = css[key].split(' ');
         const newArr = arr.map((item: string) => {
           if (item.includes('var(')) {
-            return map[item];
+            return map[item] || item;
           }
           return item;
         });

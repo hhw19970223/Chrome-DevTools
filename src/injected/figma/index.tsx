@@ -2,11 +2,12 @@ import { InjectedScriptBridge, MESSAGE_TYPES } from "@/utils";
 import { BaseCtrl } from "../BaseCtrl";
 import { TreeNodeInfo } from "@/global";
 import { logger } from "../../utils/logger";
-import { figmaNodeToHTML, getSelectedNodeHTML } from "./ast";
+import { figmaNodeToHTML, getSelectedNodeHTML, map } from "./ast";
 export class FigmaCtrl extends BaseCtrl {
   private _figma: PluginAPI | undefined;
   private _selectedNode: SceneNode | undefined;
   private _timeOut: NodeJS.Timeout | undefined;
+  private _map: Record<string, string> = map;
 
   public get figma(): PluginAPI | undefined {
     return this._figma;

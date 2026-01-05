@@ -175,7 +175,7 @@ async function convertNodeToHTML(
   if (includeStyles && "getCSSAsync" in node) {
     try {
       const css = await (node as any).getCSSAsync();
-      styles = replaceVar(css || {});
+      styles = replaceVar(css || {}, node.boundVariables || {}, node.resolvedVariableModes || {});
     } catch (error) {
       console.warn(`无法获取节点 ${node.name} 的 CSS:`, error);
     }
@@ -463,24 +463,99 @@ export async function getAllSelectedNodesHTML(
   return results;
 }
 
-function replaceVar(css: any) {
+const map: Record<string, string> = {};
+
+function replaceVar(css: any, boundVariables: any, resolvedVariableModes: any) {
   try {
     console.log(css);
-    const collections = figma.variables.getLocalVariableCollections();
+  
+    const deal = (variable: any, key?: string) => {
+      try {
+        if (variable.codeSyntax?.WEB && variable.variableCollectionId) {
 
-    for (const collection of collections) {
-      console.log("Collection:", collection.name);
+          if (map[variable.codeSyntax.WEB]) {
+            return;
+          }
 
-      for (const variableId of collection.variableIds) {
-        const variable = figma.variables.getVariableById(variableId);
-
-        console.log({
-          name: variable?.name, // --color/primary
-          type: variable?.resolvedType, // COLOR | FLOAT | STRING
-          values: variable?.valuesByMode, // 各 mode 的值
-        });
+          const variableCollectionId = variable.variableCollectionId;
+          const curModeId = resolvedVariableModes[variableCollectionId];
+          const value = variable.valuesByMode[curModeId];
+          if (typeof value === 'string') {
+            map[variable.codeSyntax.WEB] = value
+            if (key) {
+              map[key] = value;
+            }
+          } else if (typeof value === 'number') {
+            map[variable.codeSyntax.WEB] = value + 'px';
+            if (key) {
+              map[key] = map[variable.codeSyntax.WEB];
+            }
+          } else if (typeof value === 'object') {
+            if (value.id) {
+              const variable = window.figma.variables.getVariableById(value.id);
+              deal(variable, key || variable.codeSyntax.WEB);
+            } else if (value.r && value.g && value.b) {
+              const { r, g, b } = value;
+              const a = value.a !== undefined ? value.a : 1;
+              map[variable.codeSyntax.WEB] = `rgba(${Math.round(r * 255)}, ${Math.round(g * 255)}, ${Math.round(b * 255)}, ${a})`;
+              if (key) {
+                map[key] = map[variable.codeSyntax.WEB];
+              }
+            } else if (value.type === 'GRADIENT') {
+              const { stops } = value;
+              const gradient = `linear-gradient(${stops.map((stop: any) => `${stop.color.r}, ${stop.color.g}, ${stop.color.b}, ${stop.color.a}`).join(', ')})`;
+              map[variable.codeSyntax.WEB] = gradient;
+              if (key) {
+                map[key] = map[variable.codeSyntax.WEB];
+              }
+            }
+          }
+        }
+      } catch (e) {
+        console.error(e);
       }
     }
+
+    for (const key in boundVariables) {
+      try {
+        if (Array.isArray(boundVariables[key])) {
+          for ( const item of boundVariables[key]) {
+            if (item.id) {
+              const variable = window.figma.variables.getVariableById(item.id);
+              deal(variable);
+            }
+          }
+        } else if (boundVariables[key]?.id) {
+          const variable = window.figma.variables.getVariableById(boundVariables[key].id);
+          deal(variable);
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+
+    for (const key in css) {
+      let varValue = css[key];
+      if (varValue.includes('var(')) {
+        if (map[css[key]]) {
+          css[key] = map[css[key]];
+        }
+      }
+      varValue =  css[key];
+      if (varValue.includes('var(')) {
+        const arr = css[key].split(' ');
+        const newArr = arr.map((item: string) => {
+          if (item.includes('var(')) {
+            return map[item];
+          }
+          return item;
+        });
+        css[key] = newArr.join(' ');
+      }
+    
+    }
+    
     return css;
   } catch (e) {
     return css;

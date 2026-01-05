@@ -176,13 +176,19 @@
           // 如果有 export default 但没找到名称，使用 __exportDefault
           componentName = '__exportDefault';
         } else {
-          // 查找最后一个定义的组件
-          const componentMatch = code.match(/(?:const|function)\s+(\w+)\s*[:=]/g);
-          if (componentMatch && componentMatch.length > 0) {
-            const lastMatch = componentMatch[componentMatch.length - 1];
-            const nameMatch = lastMatch.match(/(?:const|function)\s+(\w+)/);
-            if (nameMatch) {
-              componentName = nameMatch[1];
+          // 优先查找 export function 导出的组件
+          const exportFunctionMatch = code.match(/export\s+function\s+(\w+)/);
+          if (exportFunctionMatch) {
+            componentName = exportFunctionMatch[1];
+          } else {
+            // 查找最后一个定义的组件
+            const componentMatch = code.match(/(?:const|function)\s+(\w+)\s*[:=]/g);
+            if (componentMatch && componentMatch.length > 0) {
+              const lastMatch = componentMatch[componentMatch.length - 1];
+              const nameMatch = lastMatch.match(/(?:const|function)\s+(\w+)/);
+              if (nameMatch) {
+                componentName = nameMatch[1];
+              }
             }
           }
         }

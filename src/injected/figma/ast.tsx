@@ -18,7 +18,7 @@ interface HTMLNode {
  */
 function getHTMLTag(nodeType: string): string {
   const tagMap: Record<string, string> = {
-    FRAME: "svg",
+    FRAME: "div",
     GROUP: "svg",
     TEXT: "span",
     RECTANGLE: "div",

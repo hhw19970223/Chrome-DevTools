@@ -267,6 +267,33 @@ async function convertNodeToHTML(
     }
   }
 
+  // 检查：如果是 div 且所有子节点都是 svg，则将整个节点导出为 svg
+  if (tag === "div" && children.length > 1 && "exportAsync" in node) {
+    const allChildrenAreSvg = children.every(child => child.tag === "svg");
+    
+    if (allChildrenAreSvg) {
+      try {
+        const svgBytes = await (node as any).exportAsync({
+          format: 'SVG',
+          svgOutlineText: false,
+        });
+        const svgString = new TextDecoder().decode(svgBytes);
+        console.log('div 节点所有子节点都是 SVG，导出为 SVG:', node.name);
+        
+        return {
+          tag: "svg",
+          attributes,
+          styles,
+          children: [],
+          text: undefined,
+          svg: svgString,
+        };
+      } catch (error) {
+        console.warn(`无法导出 div->svg 节点 ${node.name}:`, error);
+      }
+    }
+  }
+
   return {
     tag,
     attributes,

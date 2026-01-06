@@ -269,7 +269,9 @@ async function convertNodeToHTML(
 
   // 检查：如果是 div 且所有子节点都是 svg，则将整个节点导出为 svg
   if (tag === "div" && children.length > 1 && "exportAsync" in node) {
-    const allChildrenAreSvg = children.filter(child => child.tag === "svg").length > 1;
+    const svg_times = children.filter(child => child.tag === "svg").length;
+    const other_times = children.filter(child => child.tag !== "svg").length;
+    const allChildrenAreSvg = svg_times > 1 && svg_times > other_times;
     
     if (allChildrenAreSvg) {
       try {

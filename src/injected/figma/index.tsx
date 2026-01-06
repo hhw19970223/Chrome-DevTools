@@ -162,6 +162,22 @@ export class FigmaCtrl extends BaseCtrl {
       }
     }, 500);
   }
+
+  public async toSvg(): Promise<string> {
+    const node = this.getCurrentElement();
+    const svgBytes = await (node as any).exportAsync({
+      format: 'SVG',
+      svgOutlineText: false,
+    });
+    const svgString = new TextDecoder().decode(svgBytes);
+
+    this.sendDevToolData({
+      selected: node,
+      html: svgString,
+    });
+
+    return svgString;
+  }
 }
 
 const type_object = {

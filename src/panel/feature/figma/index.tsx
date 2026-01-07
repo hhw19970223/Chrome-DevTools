@@ -72,7 +72,7 @@ export function Figma() {
             onChange={(value) => {
               setMock(value || "");
             }}
-            theme="vs"
+            theme="light"
           />
         </div>
         <div className="h-full w-full overflow-hidden relative max-w-full max-h-full">

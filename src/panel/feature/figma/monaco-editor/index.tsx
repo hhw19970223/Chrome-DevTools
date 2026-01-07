@@ -10,7 +10,7 @@ interface Props {
   language: string
   content: string,
   onChange: (value?: string) => void,
-  theme?: 'vs' | 'vs-dark'
+  theme?: 'light' | 'vs-dark'
 }
 export function MonacoEditor({language, content, onChange, theme = 'vs-dark'}: Props) {
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);

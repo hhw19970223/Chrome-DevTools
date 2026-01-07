@@ -3,6 +3,7 @@ import { BaseCtrl } from "../BaseCtrl";
 import { TreeNodeInfo } from "@/global";
 import { logger } from "../../utils/logger";
 import { figmaNodeToHTML, getSelectedNodeHTML, map } from "./ast";
+import { assert } from "console";
 export class FigmaCtrl extends BaseCtrl {
   private _figma: PluginAPI | undefined;
   private _selectedNode: SceneNode | undefined;
@@ -158,6 +159,7 @@ export class FigmaCtrl extends BaseCtrl {
           selected: node,
           tree,
           html: info.html,
+          ast: info.ast
         });
       }
     }, 500);

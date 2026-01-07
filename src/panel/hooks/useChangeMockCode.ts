@@ -4,7 +4,7 @@ import { v4 } from "uuid";
 import { traceparent } from "@/utils/cursor";
 import { notifications } from "@mantine/notifications";
 
-export function useChangeJavaCode() {
+export function useChangeMockCode() {
   const { loginInfo } = useLoginStore();
 
   const [status, setStatus] = useState<
@@ -15,7 +15,7 @@ export function useChangeJavaCode() {
   
   const loading = useMemo(() => status === "streaming", [status]);
 
-  const changeCode = useCallback(async (reactComponentCode: string, onChange: (code: string) => void, setOnClose: (onClose: () => void) => void) => {
+  const changeCode = useCallback(async (ast: any, onChange: (code: string) => void, setOnClose: (onClose: () => void) => void) => {
     if (loading) return;
     
     if (!loginInfo?.accessToken) {
@@ -27,10 +27,10 @@ export function useChangeJavaCode() {
       return;
     }
 
-    if (!reactComponentCode || reactComponentCode.trim() === '') {
+    if (!ast) {
       notifications.show({
         title: '提示',
-        message: '请先生成或输入代码',
+        message: 'ast为空',
         color: 'orange',
       });
       return;
@@ -51,71 +51,67 @@ export function useChangeJavaCode() {
       setStatus("streaming");
 
       // 生成优化代码的提示词
-      const promptText = `请分析以下 React + Tailwind CSS 组件代码，并完成以下任务：
+      const promptText = `你是一个后端架构师和 Mock 数据专家。
+下面是一个页面的 UI 结构树（不是 HTML）。
 
-      ## 分析要求：
-      
-      1. **页面模块拆分**：
-         - 识别页面中的主要功能模块（如：用户信息展示、数据列表、表单提交、搜索筛选等）
-         - 分析每个模块的业务功能和职责
-         - 识别模块之间的数据依赖关系
-         - 列出每个模块的核心功能点
-      
-      2. **数据源分析**：
-         - 识别所有需要动态获取的数据（如：列表数据、详情数据、统计数据等）
-         - 区分哪些是前端本地状态，哪些需要服务端接口
-         - 分析数据的增删改查（CRUD）操作需求
-         - 识别数据的关联关系和依赖关系
-         - 标注数据的必填性、数据类型、验证规则
-      
-      3. **接口设计规范**：
-         - 遵循 RESTful API 设计原则
-         - 使用标准 HTTP 方法（GET、POST、PUT、DELETE、PATCH）
-         - 采用合理的资源命名和 URL 结构
-         - 统一的响应格式（包含 code、message、data）
-         - 合理的状态码使用（200、201、400、404、500 等）
-      
-      4. **Java 接口生成要求**：
-         - 使用 Spring Boot + Spring MVC 框架
-         - Controller 层：定义 RESTful 接口，使用 @RestController、@RequestMapping 等注解
-         - Service 层：定义业务逻辑接口
-         - Entity/DTO 层：定义数据实体和数据传输对象
-         - 添加必要的参数验证注解（@Valid、@NotNull、@NotBlank 等）
-         - 添加 Swagger/OpenAPI 文档注解（@Api、@ApiOperation 等）
-      
-      5. **代码结构**：
-         - 为每个模块生成独立的 Controller
-         - 定义清晰的请求参数类（DTO/VO）
-         - 定义统一的响应结果类（Result<T>）
-         - 添加必要的注释说明接口用途和参数
-         - 遵循 Java 命名规范和代码格式
-      
-      6. **安全和性能考虑**：
-         - 标注需要权限控制的接口
-         - 建议分页的接口添加分页参数
-         - 标注需要缓存的接口
-         - 标注需要事务处理的操作
-      
-      ## 输出格式：
-      
-      ### 第一部分：模块分析
-      - 列出所有识别到的功能模块
-      - 说明每个模块的作用和需要的数据
-      
-      ### 第二部分：接口清单
-      - 列出所有需要的后端接口
-      - 说明每个接口的用途、请求方法、URL、请求参数、响应数据
-      
-      ### 第三部分：Java 代码
-      - 生成完整的 Java 后端代码
-      - 包含 Controller、Service 接口、Entity/DTO 类
-      - 代码应该可以直接在 Spring Boot 项目中使用
-      - 使用 4 空格缩进，遵循 Java 代码规范
-      
-      不要添加任何额外的 markdown 代码块符号在 Java 代码部分。
-      
-      ## 前端组件代码：
-      ${reactComponentCode}`;
+你的任务：
+1. 推断该页面涉及的【领域实体】
+2. 推断每个实体的字段、类型、是否必填
+3. 推断页面涉及的操作（查询 / 新增 / 编辑 / 删除）
+4. 设计标准 RESTful API（资源名 + HTTP 方法）
+5. 为每个 API 生成完整的 TypeScript 类型定义
+6. 为每个 API 生成真实、合理的 Mock 数据
+
+输出要求：
+- 使用 TypeScript 语法
+- 所有内容生成在一个完整的 .ts 文件中
+- 文件结构应包含：
+  1. TypeScript 接口定义（请求/响应类型）
+  2. RESTful API 路径和方法定义
+  3. Mock 数据生成函数
+  4. 导出所有内容供使用
+
+约束：
+- 严格遵循 RESTful 规范（GET/POST/PUT/DELETE）
+- 不要发明 UI 中不存在的字段
+- Mock 数据必须真实、合理、符合业务场景
+- 使用标准的分页、排序、筛选参数（如果需要）
+- 添加必要的注释说明
+
+示例输出格式：
+\`\`\`typescript
+// ==================== 类型定义 ====================
+export interface User {
+  id: number;
+  name: string;
+  email: string;
+  // ...
+}
+
+// ==================== API 定义 ====================
+export const API_ENDPOINTS = {
+  // GET /api/users - 获取用户列表
+  getUsers: { method: 'GET', path: '/api/users' },
+  // POST /api/users - 创建用户
+  createUser: { method: 'POST', path: '/api/users' },
+  // ...
+};
+
+// ==================== Mock 数据 ====================
+export const mockUsers: User[] = [
+  { id: 1, name: '张三', email: 'zhangsan@example.com' },
+  // ...
+];
+
+export function getMockUserList() {
+  return { data: mockUsers, total: mockUsers.length };
+}
+\`\`\`
+
+## UI 结构树：
+${JSON.stringify(ast)}
+
+请直接输出完整的 TypeScript 代码文件。`;
 
 
       try {
@@ -239,9 +235,9 @@ export function useChangeJavaCode() {
   }, [loading])
 
   return {
-    changeJavaCode: changeCode,
-    loadingJava: loading,
-    statusJava: status,
-    textJava: text
+    changeMockCode: changeCode,
+    loadingMock: loading,
+    statusMock: status,
+    textMock: text
   }
 }  

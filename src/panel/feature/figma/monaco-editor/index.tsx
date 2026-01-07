@@ -9,9 +9,10 @@ import './config';
 interface Props {
   language: string
   content: string,
-  onChange: (value?: string) => void
+  onChange: (value?: string) => void,
+  theme?: 'vs' | 'vs-dark'
 }
-export function MonacoEditor({language, content, onChange}: Props) {
+export function MonacoEditor({language, content, onChange, theme = 'vs-dark'}: Props) {
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const monacoRef = useRef<any>(null);
 
@@ -35,7 +36,7 @@ export function MonacoEditor({language, content, onChange}: Props) {
       }}
       className=''
       onChange={onChange}
-      theme={'vs-dark'}
+      theme={theme}
       loading={<span></span>}
       options={{
         minimap: { enabled: false },

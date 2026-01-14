@@ -12,6 +12,7 @@ export function useChangeCode() {
 >("ready");
 
   const [text, setText] = useState<string>("");
+  const [thinkingText, setThinkingText] = useState<string>("");
   
   const loading = useMemo(() => status === "streaming", [status]);
 
@@ -132,9 +133,15 @@ ${html}`;
 
             if (streamUnifiedChatResponse.text != null) {
               console.warn(streamUnifiedChatResponse.text);
-              console.log(streamUnifiedChatResponse.text);
               setText((text) => {
                 return text + streamUnifiedChatResponse.text;
+              })
+            }
+
+            if (streamUnifiedChatResponse?.thinking?.text != null) {
+              console.warn(streamUnifiedChatResponse?.thinking?.text);
+              setThinkingText((text) => {
+                return text + streamUnifiedChatResponse.thinking.text;
               })
             }
 

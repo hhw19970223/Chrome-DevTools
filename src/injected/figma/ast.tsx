@@ -189,7 +189,6 @@ async function convertNodeToHTML(
         svgOutlineText: false,
       });
       const svgString = new TextDecoder().decode(svgBytes);
-      console.log('SVG 内容:', svgString);
       
       // 可以选择将 SVG 内容存储在 attributes 或其他地方
       // 这里暂时记录到控制台，根据需求可以进一步处理
@@ -280,7 +279,6 @@ async function convertNodeToHTML(
           svgOutlineText: false,
         });
         const svgString = new TextDecoder().decode(svgBytes);
-        console.log('div 节点所有子节点都是 SVG，导出为 SVG:', node.name);
         
         return {
           tag: "svg",
@@ -496,7 +494,6 @@ export const map: Record<string, string> = {};
 
 function replaceVar(css: any, boundVariables: any, resolvedVariableModes: any) {
   try {
-    console.log(css);
   
     const deal = (variable: any, key?: string) => {
       try {

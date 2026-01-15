@@ -154,7 +154,6 @@ export class FigmaCtrl extends BaseCtrl {
         this._selectedNode = node;
         const tree = await this.generateTree(node);
         const info = await this.nodeToHTML(node, { includeStyles: true, format: 'dom' })
-        console.log(info);
         this.sendDevToolData({
           selected: node,
           tree,

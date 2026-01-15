@@ -105,7 +105,7 @@ export function Figma() {
       >
         {
           <Tooltip label={ loadingMock ? <div className="flex flex-col gap-4 px-4 py-2 pb-4">
-            <div>
+            <div className="max-w-[500px] max-h-[600px] overflow-auto">
               <LineBreak text={textMock} />
             </div>
             <div className="flex justify-end px-4">
@@ -133,7 +133,7 @@ export function Figma() {
 
         {
           isReact ? null : <Tooltip label={ loading ? <div className="flex flex-col gap-4 px-4 py-2 pb-4">
-            <div>
+            <div className="max-w-[500px] max-h-[600px] overflow-auto">
               <LineBreak text={text} />
             </div>
             <div className="flex justify-end px-4">

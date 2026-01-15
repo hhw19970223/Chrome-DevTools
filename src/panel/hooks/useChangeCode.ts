@@ -52,7 +52,7 @@ export function useChangeCode() {
       setStatus("streaming");
 
       // 生成优化代码的提示词
-      const promptText = `请将以下 HTML 代码转换为 React + Tailwind CSS 组件，具体要求：
+      const promptText = `@index.html 请将以下 HTML 代码转换为 React + Tailwind CSS 组件，具体要求：
 
 ## 转换要求：
 1. **HTML 结构转换**：
@@ -97,9 +97,7 @@ export function useChangeCode() {
 ## 输出格式：
 只返回完整的 React 组件代码，不要添加任何额外说明、markdown 标记或代码块符号。
 代码应该可以直接在 React 项目中使用。
-
-## 原始代码：
-${html}`;
+`;
 
 
       try {
@@ -116,7 +114,8 @@ ${html}`;
             images: [],
             richText: "",
             uuid: composerId,
-            code: ''
+            code: html,
+            isThink: true,
           }),
         });
 

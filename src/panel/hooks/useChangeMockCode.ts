@@ -128,7 +128,8 @@ ${JSON.stringify(ast)}
             images: [],
             richText: "",
             uuid: composerId,
-            code: ''
+            code: '',
+            isThink: true,
           }),
         });
 

@@ -3,14 +3,13 @@
  * 将 Figma 选中的节点及其所有子节点转换为 HTML 结构
  */
 
-
 interface HTMLNode {
   tag: string;
   attributes: Record<string, string>;
   styles: Record<string, string>;
   children: HTMLNode[];
   text?: string;
-  svg?: string,
+  svg?: string;
 }
 
 /**
@@ -151,7 +150,9 @@ function convertSegmentStylesToCSS(segment: any): Record<string, string> {
     if (fill.type === "SOLID" && fill.color) {
       const { r, g, b } = fill.color;
       const a = fill.opacity !== undefined ? fill.opacity : 1;
-      styles.color = `rgba(${Math.round(r * 255)}, ${Math.round(g * 255)}, ${Math.round(b * 255)}, ${a})`;
+      styles.color = `rgba(${Math.round(r * 255)}, ${Math.round(
+        g * 255
+      )}, ${Math.round(b * 255)}, ${a})`;
     }
   }
 
@@ -175,7 +176,11 @@ async function convertNodeToHTML(
   if (includeStyles && "getCSSAsync" in node) {
     try {
       const css = await (node as any).getCSSAsync();
-      styles = replaceVar(css || {}, node.boundVariables || {}, node.resolvedVariableModes || {});
+      styles = replaceVar(
+        css || {},
+        node.boundVariables || {},
+        node.resolvedVariableModes || {}
+      );
     } catch (error) {
       console.warn(`无法获取节点 ${node.name} 的 CSS:`, error);
     }
@@ -185,18 +190,18 @@ async function convertNodeToHTML(
   if (tag === "svg" && "exportAsync" in node) {
     try {
       const svgBytes = await (node as any).exportAsync({
-        format: 'SVG',
+        format: "SVG",
         svgOutlineText: false,
       });
       const svgString = new TextDecoder().decode(svgBytes);
-      
+
       // 可以选择将 SVG 内容存储在 attributes 或其他地方
       // 这里暂时记录到控制台，根据需求可以进一步处理
       return {
         tag,
         attributes,
         styles,
-        children:[],
+        children: [],
         text: undefined,
         svg: svgString,
       };
@@ -207,9 +212,13 @@ async function convertNodeToHTML(
 
   // 处理子节点
   const children: HTMLNode[] = [];
-  
+
   // 如果是文本节点且包含多种样式，使用 getStyledTextSegments 处理
-  if (node.type === "TEXT" && "getStyledTextSegments" in node && includeStyles) {
+  if (
+    node.type === "TEXT" &&
+    "getStyledTextSegments" in node &&
+    includeStyles
+  ) {
     try {
       const segments = await (node as any).getStyledTextSegments([
         "fontSize",
@@ -225,13 +234,13 @@ async function convertNodeToHTML(
         "indentation",
         "hyperlink",
       ]);
-      
+
       // 如果有多个样式段落，将每个段落作为子节点
       if (segments && segments.length > 1) {
         for (const segment of segments) {
           // 直接从 segment 对象中提取样式并转换为 CSS
           const segmentStyles = convertSegmentStylesToCSS(segment);
-          
+
           children.push({
             tag: "span",
             attributes: {},
@@ -240,7 +249,26 @@ async function convertNodeToHTML(
             text: segment.characters,
           });
         }
-        
+
+        if (styles) {
+          delete styles['text-decoration-line'];
+          delete styles['text-transform'];
+          delete styles['letter-spacing'];
+          delete styles['line-height'];
+          delete styles['font-size'];
+          delete styles['font-family'];
+          delete styles['font-weight'];
+          delete styles['font-style'];
+          delete styles['color'];
+          delete styles['opacity'];
+          delete styles['fill-style-id'];
+          delete styles['list-options'];
+          delete styles['indentation'];
+          delete styles['hyperlink'];
+          delete styles['text-case'];
+          delete styles['text-decoration'];
+        }
+
         // 如果成功处理了文本段落，清空父节点的 text
         return {
           tag,
@@ -257,7 +285,7 @@ async function convertNodeToHTML(
       // 如果失败，继续使用原有逻辑
     }
   }
-  
+
   // 处理普通子节点
   if ("children" in node && node.children) {
     for (const child of node.children) {
@@ -268,18 +296,18 @@ async function convertNodeToHTML(
 
   // 检查：如果是 div 且所有子节点都是 svg，则将整个节点导出为 svg
   if (tag === "div" && children.length > 1 && "exportAsync" in node) {
-    const svg_times = children.filter(child => child.tag === "svg").length;
-    const other_times = children.filter(child => child.tag !== "svg").length;
+    const svg_times = children.filter((child) => child.tag === "svg").length;
+    const other_times = children.filter((child) => child.tag !== "svg").length;
     const allChildrenAreSvg = svg_times > 1 && svg_times > other_times;
-    
+
     if (allChildrenAreSvg) {
       try {
         const svgBytes = await (node as any).exportAsync({
-          format: 'SVG',
+          format: "SVG",
           svgOutlineText: false,
         });
         const svgString = new TextDecoder().decode(svgBytes);
-        
+
         return {
           tag: "svg",
           attributes,
@@ -307,11 +335,13 @@ async function convertNodeToHTML(
  * 将 HTML 节点对象转换为 HTML 字符串
  */
 function htmlNodeToString(node: HTMLNode, indent: number = 0): string {
-  
   const indentStr = "  ".repeat(indent);
   if (node.svg) {
-    return node.svg.split("\n").map((line) => `${indentStr}${line}`).join("\n");
-  }  
+    return node.svg
+      .split("\n")
+      .map((line) => `${indentStr}${line}`)
+      .join("\n");
+  }
   const attrsStr = Object.entries(node.attributes)
     .map(([key, value]) => `${key}="${value}"`)
     .join(" ");
@@ -494,11 +524,9 @@ export const map: Record<string, string> = {};
 
 function replaceVar(css: any, boundVariables: any, resolvedVariableModes: any) {
   try {
-  
     const deal = (variable: any, key?: string) => {
       try {
         if (variable.codeSyntax?.WEB && variable.variableCollectionId) {
-
           if (map[variable.codeSyntax.WEB]) {
             return;
           }
@@ -506,30 +534,37 @@ function replaceVar(css: any, boundVariables: any, resolvedVariableModes: any) {
           const variableCollectionId = variable.variableCollectionId;
           const curModeId = resolvedVariableModes[variableCollectionId];
           const value = variable.valuesByMode[curModeId];
-          if (typeof value === 'string') {
-            map[variable.codeSyntax.WEB] = value
+          if (typeof value === "string") {
+            map[variable.codeSyntax.WEB] = value;
             if (key) {
               map[key] = value;
             }
-          } else if (typeof value === 'number') {
-            map[variable.codeSyntax.WEB] = value + 'px';
+          } else if (typeof value === "number") {
+            map[variable.codeSyntax.WEB] = value + "px";
             if (key) {
               map[key] = map[variable.codeSyntax.WEB];
             }
-          } else if (typeof value === 'object') {
+          } else if (typeof value === "object") {
             if (value.id) {
               const variable = window.figma.variables.getVariableById(value.id);
               deal(variable, key || variable.codeSyntax.WEB);
             } else if (value.r && value.g && value.b) {
               const { r, g, b } = value;
               const a = value.a !== undefined ? value.a : 1;
-              map[variable.codeSyntax.WEB] = `rgba(${Math.round(r * 255)}, ${Math.round(g * 255)}, ${Math.round(b * 255)}, ${a})`;
+              map[variable.codeSyntax.WEB] = `rgba(${Math.round(
+                r * 255
+              )}, ${Math.round(g * 255)}, ${Math.round(b * 255)}, ${a})`;
               if (key) {
                 map[key] = map[variable.codeSyntax.WEB];
               }
-            } else if (value.type === 'GRADIENT') {
+            } else if (value.type === "GRADIENT") {
               const { stops } = value;
-              const gradient = `linear-gradient(${stops.map((stop: any) => `${stop.color.r}, ${stop.color.g}, ${stop.color.b}, ${stop.color.a}`).join(', ')})`;
+              const gradient = `linear-gradient(${stops
+                .map(
+                  (stop: any) =>
+                    `${stop.color.r}, ${stop.color.g}, ${stop.color.b}, ${stop.color.a}`
+                )
+                .join(", ")})`;
               map[variable.codeSyntax.WEB] = gradient;
               if (key) {
                 map[key] = map[variable.codeSyntax.WEB];
@@ -540,19 +575,21 @@ function replaceVar(css: any, boundVariables: any, resolvedVariableModes: any) {
       } catch (e) {
         console.error(e);
       }
-    }
+    };
 
     for (const key in boundVariables) {
       try {
         if (Array.isArray(boundVariables[key])) {
-          for ( const item of boundVariables[key]) {
+          for (const item of boundVariables[key]) {
             if (item.id) {
               const variable = window.figma.variables.getVariableById(item.id);
               deal(variable);
             }
           }
         } else if (boundVariables[key]?.id) {
-          const variable = window.figma.variables.getVariableById(boundVariables[key].id);
+          const variable = window.figma.variables.getVariableById(
+            boundVariables[key].id
+          );
           deal(variable);
         }
       } catch (e) {
@@ -560,33 +597,28 @@ function replaceVar(css: any, boundVariables: any, resolvedVariableModes: any) {
       }
     }
 
-
     for (const key in css) {
       let varValue = css[key];
-      if (varValue.includes('var(')) {
+      if (varValue.includes("var(")) {
         if (map[css[key]]) {
           css[key] = map[css[key]];
         }
       }
       varValue = css[key];
-      if (varValue.includes('var(')) {
-        css[key] = css[key].replace(
-          /var\(\s*[^,]+,\s*([^)]+)\s*\)/g,
-          "$1"
-        )
-        
-        const arr = css[key].split(' ');
+      if (varValue.includes("var(")) {
+        css[key] = css[key].replace(/var\(\s*[^,]+,\s*([^)]+)\s*\)/g, "$1");
+
+        const arr = css[key].split(" ");
         const newArr = arr.map((item: string) => {
-          if (item.includes('var(')) {
+          if (item.includes("var(")) {
             return map[item] || item;
           }
           return item;
         });
-        css[key] = newArr.join(' ');
+        css[key] = newArr.join(" ");
       }
-    
     }
-    
+
     return css;
   } catch (e) {
     return css;

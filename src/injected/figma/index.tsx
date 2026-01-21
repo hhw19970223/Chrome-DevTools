@@ -36,12 +36,15 @@ export class FigmaCtrl extends BaseCtrl {
     const self = this;
     self.sendDevToolData({ isDev: !!self.figma });
     Object.defineProperty(window, "figma", {
-      configurable: true,
+      configurable: false,
+      enumerable:false,
       get() {
         return self.figma;
       },
       set(value) {
-        self.figma = value;
+        if (value) {
+          self.figma = value;
+        }
       },
     });
   }

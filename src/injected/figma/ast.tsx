@@ -10,6 +10,7 @@ interface HTMLNode {
   children: HTMLNode[];
   text?: string;
   svg?: string;
+  hidden?: boolean
 }
 
 /**
@@ -164,13 +165,50 @@ function convertSegmentStylesToCSS(segment: any): Record<string, string> {
  */
 async function convertNodeToHTML(
   node: SceneNode,
-  includeStyles: boolean = true
+  includeStyles: boolean = true,
+  onlyText?: boolean
 ): Promise<HTMLNode> {
   const tag = getHTMLTag(node.type);
   const attributes = getNodeAttributes(node);
   const text = getTextContent(node);
 
   let styles: Record<string, string> = {};
+
+  if (node.type === 'FRAME' && ['default', ''].some(name => node.name?.includes(name)) && onlyText) {
+
+    return {
+      tag,
+      hidden: true,
+      attributes: {},
+      styles,
+      children: [],
+    };
+    
+    // try {
+    //   // 导出节点为 PNG 图片
+    //   const bytes = await node.exportAsync({
+    //     format: 'PNG',
+    //   });
+      
+    //   const base64 = uint8ToBase64(bytes);
+    //   const url = `data:image/png;base64,${base64}`;
+      
+    //   // 将图片作为 img 标签返回
+    //   return {
+    //     tag: 'img',
+    //     attributes: {
+    //       src: url,
+    //       alt: node.name || 'Exported image',
+    //       'data-node-id': node.id
+    //     },
+    //     styles,
+    //     children: [],
+    //     text: undefined,
+    //   };
+    // } catch (error) {
+    //   console.warn(`无法导出 image 节点 ${node.name}:`, error);
+    // }
+  }
 
   // 获取 CSS 样式
   if (includeStyles && "getCSSAsync" in node) {
@@ -188,6 +226,33 @@ async function convertNodeToHTML(
 
   // 特殊处理：如果是 SVG 节点，获取实际的 SVG 内容
   if (tag === "svg" && "exportAsync" in node) {
+    if (onlyText) {
+      try {
+        // 导出节点为 PNG 图片
+        const bytes = await node.exportAsync({
+          format: 'PNG',
+        });
+        
+        const base64 = uint8ToBase64(bytes);
+        const url = `data:image/png;base64,${base64}`;
+        
+        // 将图片作为 img 标签返回
+        return {
+          tag: 'img',
+          attributes: {
+            src: url,
+            alt: node.name || 'Exported image',
+            'data-node-id': node.id
+          },
+          styles,
+          children: [],
+          text: undefined,
+        };
+      } catch (error) {
+        console.warn(`无法导出 image 节点 ${node.name}:`, error);
+      }
+    }
+
     try {
       const svgBytes = await (node as any).exportAsync({
         format: "SVG",
@@ -289,7 +354,7 @@ async function convertNodeToHTML(
   // 处理普通子节点
   if ("children" in node && node.children) {
     for (const child of node.children) {
-      const childHTML = await convertNodeToHTML(child, includeStyles);
+      const childHTML = await convertNodeToHTML(child, includeStyles, onlyText);
       children.push(childHTML);
     }
   }
@@ -301,6 +366,34 @@ async function convertNodeToHTML(
     const allChildrenAreSvg = svg_times > 1 && svg_times > other_times;
 
     if (allChildrenAreSvg) {
+
+      if (onlyText) {
+        try {
+          // 导出节点为 PNG 图片
+          const bytes = await node.exportAsync({
+            format: 'PNG',
+          });
+          
+          const base64 = uint8ToBase64(bytes);
+          const url = `data:image/png;base64,${base64}`;
+          
+          // 将图片作为 img 标签返回
+          return {
+            tag: 'img',
+            attributes: {
+              src: url,
+              alt: node.name || 'Exported image',
+              'data-node-id': node.id
+            },
+            styles,
+            children: [],
+            text: undefined,
+          };
+        } catch (error) {
+          console.warn(`无法导出 image 节点 ${node.name}:`, error);
+        }
+      }
+
       try {
         const svgBytes = await (node as any).exportAsync({
           format: "SVG",
@@ -336,6 +429,9 @@ async function convertNodeToHTML(
  */
 function htmlNodeToString(node: HTMLNode, indent: number = 0): string {
   const indentStr = "  ".repeat(indent);
+  if (node.hidden) {
+    return '';
+  }
   if (node.svg) {
     return node.svg
       .split("\n")
@@ -435,16 +531,17 @@ export async function figmaNodeToHTML(
   options: {
     includeStyles?: boolean;
     format?: "string" | "dom" | "both";
+    onlyText?: boolean
   } = {}
 ): Promise<{
   html: string;
   element?: HTMLElement;
   ast: HTMLNode;
 }> {
-  const { includeStyles = true, format = "both" } = options;
+  const { includeStyles = true, format = "both", onlyText } = options;
 
   // 转换为 HTML AST
-  const ast = await convertNodeToHTML(node, includeStyles);
+  const ast = await convertNodeToHTML(node, includeStyles, onlyText);
 
   // 生成 HTML 字符串
   const html = htmlNodeToString(ast);
@@ -623,4 +720,17 @@ function replaceVar(css: any, boundVariables: any, resolvedVariableModes: any) {
   } catch (e) {
     return css;
   }
+}
+
+function uint8ToBase64(bytes: Uint8Array) {
+  let binary = '';
+  const chunk = 0x8000;
+
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode(
+      ...bytes.subarray(i, i + chunk)
+    );
+  }
+
+  return btoa(binary);
 }

@@ -3,7 +3,6 @@ import { BaseCtrl } from "../BaseCtrl";
 import { TreeNodeInfo } from "@/global";
 import { logger } from "../../utils/logger";
 import { figmaNodeToHTML, getSelectedNodeHTML, map } from "./ast";
-import { assert } from "console";
 export class FigmaCtrl extends BaseCtrl {
   private _figma: PluginAPI | undefined;
   private _selectedNode: SceneNode | undefined;
@@ -139,6 +138,7 @@ export class FigmaCtrl extends BaseCtrl {
     options?: {
       includeStyles?: boolean;
       format?: 'string' | 'dom' | 'both';
+      onlyText?: boolean
     }
   ) {
     return await figmaNodeToHTML(node, options);
@@ -181,6 +181,38 @@ export class FigmaCtrl extends BaseCtrl {
     });
 
     return svgString;
+  }
+
+  public async getAllPages(): Promise<(SceneNode | PageNode)[]> {
+    const pages = this.figma?.root.findAll(n => n.type === 'PAGE' && !['封面', 'UI稿', '基础信息', '(删除)', '（删除）'].some(name => n.name?.includes(name))) as PageNode[] || [];
+
+    let html = '';
+    for (const page of pages) {
+      const layers = page.findAll()?.filter(n => n.type === 'SECTION') || [];
+      if (layers?.length) {
+        console.log(layers);
+        html += `<h1>${page.name}</h1>
+        `;
+        for (const layer of layers) {
+          html += `<h2>${layer.name}</h2>
+          `;
+          const info = await this.nodeToHTML(layer, { includeStyles: true, format: 'dom', onlyText: true })
+          html += `${info.html}
+          `;
+        }
+      }
+     
+    }  
+   
+    this.sendDevToolData({
+      selected: pages[0],
+      tree: {},
+      html: html,
+      ast: {}
+    });
+    
+
+    return pages || [];
   }
 }
 

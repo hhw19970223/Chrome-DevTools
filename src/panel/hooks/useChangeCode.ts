@@ -74,6 +74,7 @@ export function useChangeCode() {
 
 3. **样式转换**：
    - 将所有内联样式和 style 标签中的 CSS 转换为 Tailwind CSS 类
+   - 如果Tailwind CSS 类是默认的样式直接帮我去掉不要生成到代码中
    - Flexbox 布局转换为 flex 相关类
    - Grid 布局转换为 grid 相关类
    - 定位属性转换为 relative/absolute/fixed 类

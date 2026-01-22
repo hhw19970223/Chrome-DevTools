@@ -2,6 +2,7 @@ import { Container, Stack, Tabs } from "@mantine/core";
 import { IconBrandFigma } from '@tabler/icons-react';
 import { Figma } from "./feature/figma";
 import Profile from "./feature/cursor/Profile";
+import { FigmaTest } from "./feature/figma-test";
 
 function App() {
   return (
@@ -12,10 +13,15 @@ function App() {
           <Tabs defaultValue="figma" color="green" >
             <Tabs.List>
               <Tabs.Tab value="figma" leftSection={<IconBrandFigma size={16} />}>Figma</Tabs.Tab>
+              <Tabs.Tab value="figmaTest" leftSection={<IconBrandFigma size={16} />}>Figma测试用例</Tabs.Tab>
             </Tabs.List>
 
             <Tabs.Panel value="figma" pt="md">
               <Figma />
+            </Tabs.Panel>
+
+            <Tabs.Panel value="figmaTest" pt="md">
+              <FigmaTest />
             </Tabs.Panel>
           </Tabs>
         </Stack>

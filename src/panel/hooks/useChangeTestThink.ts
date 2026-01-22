@@ -16,7 +16,7 @@ export function useChangeTestThink() {
   
   const loading = useMemo(() => status === "streaming", [status]);
 
-  const changeCode = useCallback(async (images: any[], onChange: (code: string) => void, setOnClose: (onClose: () => void) => void) => {
+  const changeTestThink = useCallback(async (images: any[], onChange: (code: string) => void, setOnClose: (onClose: () => void) => void) => {
     if (loading) return;
     
     if (!loginInfo?.accessToken) {
@@ -62,6 +62,7 @@ export function useChangeTestThink() {
 2. 按照一级模块和二级模块的层级结构，生成规范化的需求文案
 3. 需求文案应当清晰、完整、结构化，便于后续转换成测试用例
 4. 特别注意：如果图片名称（name）中包含 "default"，表示该图片是纯视觉参考图，无需进行文字提取和分析
+5. 给我生成md文档
 
 # 输出格式
 请按以下格式输出：
@@ -212,9 +213,10 @@ export function useChangeTestThink() {
   }, [loading])
 
   return {
-    changeCode,
+    changeTestThink,
     loading,
     status,
-    text
+    text,
+    thinkingText,
   }
 }  

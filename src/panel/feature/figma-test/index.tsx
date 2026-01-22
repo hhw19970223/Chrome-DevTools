@@ -1,9 +1,11 @@
 import { useDevToolsBridge } from "@/panel/hooks/useDevToolsBridge";
 import { MESSAGE_TYPES } from "@/utils";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Text } from "@mantine/core";
 import Split from "react-split";
 import { BinaryImage } from "@/panel/components/binary-image";
+import { Chat } from "@/panel/components/chat";
+import { useChangeTestThink } from "@/panel/hooks/useChangeTestThink";
 
 export function FigmaTest() {
   const [isDev, setIsDev] = useState<boolean>(false);
@@ -11,6 +13,9 @@ export function FigmaTest() {
   const [project, setProject] = useState<any>(null);
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
+  const {changeTestThink, thinkingText, text, loading: loadingThink } = useChangeTestThink();
+  const onClose = useRef<(() => void) | null>(null);
+  const [md, setMd] = useState('');
 
   useEffect(() => {
     getWindowProperty?.("figma").then((res) => {
@@ -26,6 +31,9 @@ export function FigmaTest() {
         setProject(payload.project);
         setStep(0);
         setLoading(false);
+
+        onClose?.current?.();
+        onClose.current = null;
       }
     });
     return () => {
@@ -58,12 +66,22 @@ export function FigmaTest() {
         </button>
         <button
           onClick={() => {
-            setStep((prev) => prev + 1);
+          
+            setStep((prev) => {
+              if (prev === 0) {
+                changeTestThink(project.images, (code) => {
+                  setMd(code);
+                }, (_onClose) => {
+                  onClose.current = _onClose;
+                });
+              }
+              return prev + 1;
+            });
           }}
-          disabled={loading || step >= 2 || !project}
+          disabled={loading || loadingThink || step >= 2 || !project}
           className="px-3 py-1.5 text-sm font-medium bg-green-500 text-white rounded-md hover:bg-green-600 active:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-1.5 shadow-sm hover:shadow disabled:shadow-none"
         >
-          {loading && (
+          {loading || loadingThink && (
             <svg className="animate-spin h-3.5 w-3.5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -76,7 +94,7 @@ export function FigmaTest() {
         sizes={[33, 33, 34]} // 初始宽度比例
         minSize={5} // 每个面板最小宽度
         gutterSize={8} // 拖动条宽度
-        style={{ display: "flex", height: "100%", width: "100%" }}
+        style={{ display: "flex", flex: '1 1 0%', overflow: 'hidden' }}
       >
         <div className="h-full w-full overflow-hidden relative max-w-full max-h-full">
           <div className="overflow-auto h-full w-full flex flex-col gap-4 p-4">
@@ -94,7 +112,7 @@ export function FigmaTest() {
           </div>
         </div>
         <div className="h-full w-full overflow-hidden relative max-w-full max-h-full">
-         
+          <Chat thinkingText={thinkingText} text={text} loading={loadingThink} md={md} />
         </div>
         <div className="h-full w-full overflow-hidden relative max-w-full max-h-full">
           

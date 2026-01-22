@@ -3,6 +3,7 @@ import { BaseCtrl } from "../BaseCtrl";
 import { TreeNodeInfo } from "@/global";
 import { logger } from "../../utils/logger";
 import { figmaNodeToHTML, getSelectedNodeHTML, map } from "./ast";
+import { v4 } from "uuid";
 export class FigmaCtrl extends BaseCtrl {
   private _figma: PluginAPI | undefined;
   private _selectedNode: SceneNode | undefined;
@@ -138,7 +139,6 @@ export class FigmaCtrl extends BaseCtrl {
     options?: {
       includeStyles?: boolean;
       format?: 'string' | 'dom' | 'both';
-      onlyText?: boolean
     }
   ) {
     return await figmaNodeToHTML(node, options);
@@ -155,6 +155,9 @@ export class FigmaCtrl extends BaseCtrl {
       const node = this.getCurrentElement();
       if (node && this._selectedNode !== node) {
         this._selectedNode = node;
+
+        console.log(node);
+
         const tree = await this.generateTree(node);
         const info = await this.nodeToHTML(node, { includeStyles: true, format: 'dom' })
         this.sendDevToolData({
@@ -183,82 +186,81 @@ export class FigmaCtrl extends BaseCtrl {
     return svgString;
   }
 
-  public async getAllPages(): Promise<(SceneNode | PageNode)[]> {
+  public async getAllPages(): Promise<void> {
     const pages = this.figma?.root.findAll(n => n.type === 'PAGE' && !['封面', 'UI稿', '基础信息', '(删除)', '（删除）'].some(name => n.name?.includes(name))) as PageNode[] || [];
 
-    let html = '';
+    const getImg = async (node: SceneNode, sectionName?: string): Promise<{ data: Uint8Array, name: string }[] | null> => {
+
+      // 判断节点是否符合导出条件
+      if (node.type === 'FRAME' && ['default', 'Frame'].some(name => node.name?.toLocaleLowerCase()?.includes(name.toLocaleLowerCase()))) {
+        try {
+          // 导出节点为 PNG 图片
+          const bytes = await node.exportAsync({
+            format: 'PNG',
+          });
+
+          console.log(node);
+          
+          // 如果导出成功,直接返回 bytes,不继续遍历子节点
+          return [{
+            data: bytes,
+            name: sectionName ? sectionName + '-' + node.name : node.name,
+          }];
+        } catch (error) {
+          console.warn(`无法导出 image 节点 ${node.name}:`, error);
+        }
+      }
+
+      if ('children' in node) {
+        if (node.type === 'SECTION') {
+          sectionName = node.name
+        }
+        const images: any[] = [];
+        for (const child of node.children) {
+          const imgs = await getImg(child, sectionName);
+          if (imgs) {
+            images.push(...imgs);
+          }
+        }
+        if (images?.length) {
+          return images;
+        }
+      }
+
+      return null;
+    }
+    
+    const images: any[] = [];
     for (const page of pages) {
       const layers = page.findAll()?.filter(n => n.type === 'SECTION') || [];
       if (layers?.length) {
-        console.log(layers);
-        html += `<h1>${page.name}</h1>
-        `;
-        for (const layer of layers) {
-          html += `<h2>${layer.name}</h2>
-          `;
-          const info = await this.nodeToHTML(layer, { includeStyles: true, format: 'dom', onlyText: true })
-          html += `${info.html}
-          `;
+        for (let i = 0; i < layers.length; i++) {
+          const layer = layers[i];
+          const imgs = await getImg(layer);
+          if (imgs?.length) {
+            for(const img of imgs) {
+              if (img.data) {
+                images.push({
+                  data: img.data,
+                  uuid: v4(),
+                  type: 'image/png',
+                  filename: page.name + '-' + img.name,
+                });
+              }
+            }
+          }
         }
       }
      
     }  
+
+    console.log(images);
    
     this.sendDevToolData({
-      selected: pages[0],
-      tree: {},
-      html: html,
-      ast: {}
+      project: {
+        name: this.figma?.root?.name,
+        images,
+      }
     });
-    
-
-    return pages || [];
   }
-}
-
-const type_object = {
-  "0": "BOOLEAN",
-  "1": "FLOAT",
-  "2": "STRING",
-  "3": "ALIAS",
-  "4": "COLOR",
-  "5": "EXPRESSION",
-  "6": "MAP",
-  "7": "SYMBOL_ID",
-  "8": "FONT_STYLE",
-  "9": "TEXT_DATA",
-  "10": "INVALID",
-  "11": "NODE_FIELD_ALIAS",
-  "12": "CMS_ALIAS",
-  "13": "PROP_REF",
-  "14": "IMAGE",
-  "15": "MANAGED_STRING_ALIAS",
-  "16": "LINK",
-  "17": "JS_RUNTIME_ALIAS",
-  "18": "SLOT_CONTENT_ID",
-  "19": "DATE",
-  "20": "KEYFRAME_TRACK_ID",
-  "21": "KEYFRAME_TRACK_PARAMETER_DATA",
-  "BOOLEAN": 0,
-  "FLOAT": 1,
-  "STRING": 2,
-  "ALIAS": 3,
-  "COLOR": 4,
-  "EXPRESSION": 5,
-  "MAP": 6,
-  "SYMBOL_ID": 7,
-  "FONT_STYLE": 8,
-  "TEXT_DATA": 9,
-  "INVALID": 10,
-  "NODE_FIELD_ALIAS": 11,
-  "CMS_ALIAS": 12,
-  "PROP_REF": 13,
-  "IMAGE": 14,
-  "MANAGED_STRING_ALIAS": 15,
-  "LINK": 16,
-  "JS_RUNTIME_ALIAS": 17,
-  "SLOT_CONTENT_ID": 18,
-  "DATE": 19,
-  "KEYFRAME_TRACK_ID": 20,
-  "KEYFRAME_TRACK_PARAMETER_DATA": 21
 }

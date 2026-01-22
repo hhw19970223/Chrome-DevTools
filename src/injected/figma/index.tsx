@@ -204,7 +204,7 @@ export class FigmaCtrl extends BaseCtrl {
           // 如果导出成功,直接返回 bytes,不继续遍历子节点
           return [{
             data: bytes,
-            name: sectionName ? sectionName + '-' + node.name : node.name,
+            name: sectionName ? sectionName + '--->' + node.name : node.name,
           }];
         } catch (error) {
           console.warn(`无法导出 image 节点 ${node.name}:`, error);
@@ -241,10 +241,10 @@ export class FigmaCtrl extends BaseCtrl {
             for(const img of imgs) {
               if (img.data) {
                 images.push({
-                  data: img.data,
+                  data: Array.from(img.data), // 转换为普通数组以便序列化
                   uuid: v4(),
                   type: 'image/png',
-                  filename: page.name + '-' + img.name,
+                  filename: page.name + '--->' + img.name,
                 });
               }
             }

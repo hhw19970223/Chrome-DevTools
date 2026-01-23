@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useLoginStore } from "./useLoginStore";
 import { v4 } from "uuid";
 import { traceparent } from "@/utils/cursor";
@@ -16,8 +16,12 @@ export function useChangeTestThink() {
   
   const loading = useMemo(() => status === "streaming", [status]);
 
-  const changeTestThink = useCallback(async (images: any[], onChange: (code: string) => void, setOnClose: (onClose: () => void) => void) => {
+  const changeTestThink = useCallback(async (images: any[], onChange: (code: string) => void, setOnClose: (onClose: () => void) => void, onError: () => void) => {
     if (loading) return;
+
+    setThinkingText('');
+    setText('');
+    onChange('');
     
     if (!loginInfo?.accessToken) {
       notifications.show({
@@ -178,6 +182,7 @@ export function useChangeTestThink() {
             message: '代码生成失败，请重试',
             color: 'red',
           });
+          onError();
         };
       } catch (error) {
         console.error('Fetch error:', error);
@@ -205,12 +210,6 @@ export function useChangeTestThink() {
       })
     }
   }, [loading, loginInfo]);
-
-  useEffect(() => {
-    if (!loading) {
-      setText("");
-    }
-  }, [loading])
 
   return {
     changeTestThink,

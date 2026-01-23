@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useLoginStore } from "./useLoginStore";
 import { v4 } from "uuid";
 import { traceparent } from "@/utils/cursor";
@@ -17,6 +17,9 @@ export function useChangeMockCode() {
 
   const changeCode = useCallback(async (ast: any, onChange: (code: string) => void, setOnClose: (onClose: () => void) => void) => {
     if (loading) return;
+    
+    setText('');
+    onChange('');
     
     if (!loginInfo?.accessToken) {
       notifications.show({
@@ -228,12 +231,6 @@ ${JSON.stringify(ast)}
       })
     }
   }, [loading, loginInfo]);
-
-  useEffect(() => {
-    if (!loading) {
-      setText("");
-    }
-  }, [loading])
 
   return {
     changeMockCode: changeCode,

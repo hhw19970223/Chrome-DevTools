@@ -69,11 +69,23 @@ export function FigmaTest() {
           
             setStep((prev) => {
               if (prev === 0) {
-                changeTestThink(project.images, (code) => {
+                changeTestThink(project.images.map((item: any) => {
+                  const uint8Array = new Uint8Array(item.data);
+                  const binary = Array.from(uint8Array, byte => String.fromCharCode(byte)).join('');
+                  const base64 = btoa(binary);
+                  return {
+                    ...item,
+                    data: base64
+                  }
+                }), (code) => {
                   setMd(code);
                 }, (_onClose) => {
                   onClose.current = _onClose;
+                }, () => {
+                  setStep(0);
                 });
+              } else if (prev === 1) {
+                setStep(2);
               }
               return prev + 1;
             });

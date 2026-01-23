@@ -16,13 +16,15 @@ export class FigmaCtrl extends BaseCtrl {
 
   public set figma(value: PluginAPI) {
     if (value) {
-      logger.info("已开启Figma调试模式");
-      document.addEventListener("click", this._onClick.bind(this), true);
+      if (value !== this._figma) {
+        logger.info("已开启Figma调试模式");
+        document.addEventListener("click", this._onClick.bind(this), true);
+      }
     } else {
       if (this._figma) {
         logger.warn("已关闭Figma调试模式");
+        document.removeEventListener("click", this._onClick.bind(this), true);
       }
-      document.removeEventListener("click", this._onClick.bind(this), true);
     }
     this._figma = value;
     this.sendDevToolData({ isDev: !!value });

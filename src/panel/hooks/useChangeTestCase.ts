@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useLoginStore } from "./useLoginStore";
 import { v4 } from "uuid";
 import { traceparent } from "@/utils/cursor";
@@ -12,11 +12,16 @@ export function useChangeTestCase() {
 >("ready");
 
   const [text, setText] = useState<string>("");
+  const [thinkingText, setThinkingText] = useState<string>("");
   
   const loading = useMemo(() => status === "streaming", [status]);
 
-  const changeCode = useCallback(async (requirement: any, onChange: (code: string) => void, setOnClose: (onClose: () => void) => void) => {
+  const changeTestCase = useCallback(async (requirement: any, onChange: (code: string) => void, setOnClose: (onClose: () => void) => void, onError: () => void) => {
     if (loading) return;
+
+    setThinkingText('');
+    setText('');
+    onChange('');
     
     if (!loginInfo?.accessToken) {
       notifications.show({
@@ -30,7 +35,7 @@ export function useChangeTestCase() {
     if (!requirement) {
       notifications.show({
         title: '提示',
-        message: '需求为空',
+        message: '数据为空',
         color: 'orange',
       });
       return;
@@ -51,67 +56,37 @@ export function useChangeTestCase() {
       setStatus("streaming");
 
       // 生成优化代码的提示词
-      const promptText = `你是一个后端架构师和 Mock 数据专家。
-下面是一个页面的 UI 结构树（不是 HTML）。
+      const promptText = `
+# 任务说明
+我已将 Figma 上的产品需求细化成多个模块，并转换成图片。图片的命名规则为：
+\`\${一级模块名} --->\${二级模块名} ---> \${name}\`
 
-你的任务：
-1. 推断该页面涉及的【领域实体】
-2. 推断每个实体的字段、类型、是否必填
-3. 推断页面涉及的操作（查询 / 新增 / 编辑 / 删除）
-4. 设计标准 RESTful API（资源名 + HTTP 方法）
-5. 为每个 API 生成完整的 TypeScript 类型定义
-6. 为每个 API 生成真实、合理的 Mock 数据
+# 要求
+1. 请仔细提取每张图片中的文字内容，并进行深入分析
+2. 按照一级模块和二级模块的层级结构，生成规范化的需求文案
+3. 需求文案应当清晰、完整、结构化，便于后续转换成测试用例
+4. 特别注意：如果图片名称（name）中包含 "default"，表示该图片是纯视觉参考图，无需进行文字提取和分析
+5. 给我生成md文档
 
-输出要求：
-- 使用 TypeScript 语法
-- 所有内容生成在一个完整的 .ts 文件中
-- 文件结构应包含：
-  1. TypeScript 接口定义（请求/响应类型）
-  2. RESTful API 路径和方法定义
-  3. Mock 数据生成函数
-  4. 导出所有内容供使用
+# 输出格式
+请按以下格式输出：
 
-约束：
-- 严格遵循 RESTful 规范（GET/POST/PUT/DELETE）
-- 不要发明 UI 中不存在的字段
-- Mock 数据必须真实、合理、符合业务场景
-- 使用标准的分页、排序、筛选参数（如果需要）
-- 添加必要的注释说明
+## 一级模块名称
 
-示例输出格式：
-\`\`\`typescript
-// ==================== 类型定义 ====================
-export interface User {
-  id: number;
-  name: string;
-  email: string;
-  // ...
-}
+### 二级模块名称
 
-// ==================== API 定义 ====================
-export const API_ENDPOINTS = {
-  // GET /api/users - 获取用户列表
-  getUsers: { method: 'GET', path: '/api/users' },
-  // POST /api/users - 创建用户
-  createUser: { method: 'POST', path: '/api/users' },
-  // ...
-};
+- **需求描述**：详细描述该功能的具体需求
+- **交互说明**：说明用户如何与该功能交互
+- **预期结果**：描述功能执行后的预期效果
+- **边界条件**：列出需要考虑的特殊情况或边界条件
 
-// ==================== Mock 数据 ====================
-export const mockUsers: User[] = [
-  { id: 1, name: '张三', email: 'zhangsan@example.com' },
-  // ...
-];
+（如有多个功能点，请重复以上结构）
 
-export function getMockUserList() {
-  return { data: mockUsers, total: mockUsers.length };
-}
-\`\`\`
-
-## UI 结构树：
-${JSON.stringify(requirement)}
-
-请直接输出完整的 TypeScript 代码文件。`;
+# 注意事项
+- 保持需求描述的精确性和可测试性
+- 确保层级结构清晰，便于理解
+- 跳过所有名称包含 "default" 的图片
+`;
 
 
       try {
@@ -146,9 +121,15 @@ ${JSON.stringify(requirement)}
 
             if (streamUnifiedChatResponse.text != null) {
               console.warn(streamUnifiedChatResponse.text);
-              console.log(streamUnifiedChatResponse.text);
               setText((text) => {
                 return text + streamUnifiedChatResponse.text;
+              })
+            }
+
+            if (streamUnifiedChatResponse?.thinking?.text != null) {
+              console.warn(streamUnifiedChatResponse?.thinking?.text);
+              setThinkingText((text) => {
+                return text + streamUnifiedChatResponse.thinking.text;
               })
             }
 
@@ -201,6 +182,7 @@ ${JSON.stringify(requirement)}
             message: '代码生成失败，请重试',
             color: 'red',
           });
+          onError();
         };
       } catch (error) {
         console.error('Fetch error:', error);
@@ -229,16 +211,11 @@ ${JSON.stringify(requirement)}
     }
   }, [loading, loginInfo]);
 
-  useEffect(() => {
-    if (!loading) {
-      setText("");
-    }
-  }, [loading])
-
   return {
-    changeMockCode: changeCode,
-    loadingMock: loading,
-    statusMock: status,
-    textMock: text
+    changeTestCase,
+    loading,
+    status,
+    text,
+    thinkingText,
   }
 }  

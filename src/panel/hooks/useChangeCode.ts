@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useLoginStore } from "./useLoginStore";
 import { v4 } from "uuid";
 import { traceparent } from "@/utils/cursor";
@@ -18,6 +18,10 @@ export function useChangeCode() {
 
   const changeCode = useCallback(async (html: string, onChange: (code: string) => void, setOnClose: (onClose: () => void) => void) => {
     if (loading) return;
+
+    setThinkingText('');
+    setText('');
+    onChange('');
     
     if (!loginInfo?.accessToken) {
       notifications.show({
@@ -222,16 +226,11 @@ export function useChangeCode() {
     }
   }, [loading, loginInfo]);
 
-  useEffect(() => {
-    if (!loading) {
-      setText("");
-    }
-  }, [loading])
-
   return {
     changeCode,
     loading,
     status,
-    text
+    text,
+    thinkingText
   }
 }  

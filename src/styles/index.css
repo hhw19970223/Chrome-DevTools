@@ -26,9 +26,9 @@ body {
 
 .gutter-horizontal {
   cursor: ew-resize;
-  background: #00000050;
+  background: #1DDE7450;
 }
 
 .gutter-horizontal:hover {
-  background: #00000020;
+  background: #1DDE7420;
 }

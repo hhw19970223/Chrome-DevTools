@@ -2,34 +2,70 @@ import { Bubble, Think } from "@ant-design/x";
 import LineLoading from "../loading";
 import XMarkdown from "@ant-design/x-markdown";
 import { useEffect, useRef } from "react";
+import { Editor } from "@monaco-editor/react";
 
-export function Chat({text, thinkingText, loading, md}: {text: string, thinkingText: string, loading: boolean, md: string}) {
+export function Chat({
+  text,
+  thinkingText,
+  loading,
+  md,
+  json,
+}: {
+  text: string;
+  thinkingText: string;
+  loading: boolean;
+  md?: string;
+  json?: string;
+}) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (containerRef.current) {
       containerRef.current.scrollTo({
         top: containerRef.current.scrollHeight,
-        behavior: 'smooth'
+        behavior: "smooth",
       });
     }
-  }, [text, thinkingText, md]);
+  }, [text, thinkingText, md, json]);
 
-  return <div ref={containerRef} className="flex flex-col gap-4 overflow-auto p-4 py-6 max-h-full">
-    {
-      thinkingText ? <Think title={'deep thinking'} blink loading={loading && !text} className="text-sm"><XMarkdown content={thinkingText} /></Think> : null
-    }
+  return (
+    <div
+      ref={containerRef}
+      className="flex flex-col gap-4 overflow-auto p-4 py-6 max-h-full"
+    >
+      {thinkingText ? (
+        <Think
+          title={"deep thinking"}
+          blink
+          loading={loading && !text}
+          className="text-sm"
+        >
+          <XMarkdown content={thinkingText} />
+        </Think>
+      ) : null}
 
-    {
-      text ? <Bubble content={<XMarkdown content={text} />} /> : null
-    }
+      {text ? <Bubble content={<XMarkdown content={text} />} /> : null}
 
-    {
-      md ? <Bubble content={<XMarkdown content={md} />} /> : null
-    }
+      {md ? <Bubble content={<XMarkdown content={md} />} /> : null}
 
-    { loading ? <div className="mt-4">
-      <LineLoading color="black" />
-    </div> : null }
-  </div>
+      {json ? (
+        <Editor
+          defaultLanguage={"json"}
+          defaultValue={json}
+          theme="vs-dark"
+          loading={<span></span>}
+          options={{
+            minimap: { enabled: false },
+            readOnly: true
+          }}
+        />
+      ) : null}
+
+      {loading ? (
+        <div className="mt-4">
+          <LineLoading color="black" />
+        </div>
+      ) : null}
+    </div>
+  );
 }

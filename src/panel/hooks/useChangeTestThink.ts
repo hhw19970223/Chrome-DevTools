@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { useLoginStore } from "./useLoginStore";
 import { v4 } from "uuid";
-import { traceparent } from "@/utils/cursor";
+import { traceparent, uploadChatLargeData } from "@/utils/cursor";
 import { notifications } from "@mantine/notifications";
 
 export function useChangeTestThink() {
@@ -90,23 +90,20 @@ export function useChangeTestThink() {
 
 
       try {
-        await fetch("https://www.hhw31.com/api/cursor/chat", {
-          method: "POST",
-          body: JSON.stringify({
-            text: promptText,
-            token: loginInfo.accessToken,
-            traceparent,
-            xRequestId: requestId,
-            bubbleId,
-            composerId,
-            requestId,
-            images: images,
-            richText: "",
-            uuid: composerId,
-            code: '',
-            isThink: true,
-          }),
-        });
+        await uploadChatLargeData(composerId, {
+          text: promptText,
+          token: loginInfo.accessToken,
+          traceparent,
+          xRequestId: requestId,
+          bubbleId,
+          composerId,
+          requestId,
+          images: images,
+          richText: "",
+          uuid: composerId,
+          code: '',
+          isThink: true,
+        })
 
         const eventSource = new EventSource(`https://www.hhw31.com/api/cursor/chat?data=${params}`);
 

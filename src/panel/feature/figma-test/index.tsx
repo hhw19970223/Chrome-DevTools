@@ -229,7 +229,7 @@ export function FigmaTest() {
           <Chat
             thinkingText={thinkingTextCase}
             text={testCase}
-            loading={loadingThink}
+            loading={loadingCase}
             json={json}
           />
         </div>

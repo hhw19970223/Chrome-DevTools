@@ -85,7 +85,7 @@ export function useChangeCode() {
    - 响应式设计使用 sm:/md:/lg: 前缀
 
 4. **组件化**：
-   - 将代码封装为一个独立的 React 函数组件
+   - 将代码封装为一个独立的 React 函数组件, 请使用export const导出。
    - 添加必要的 props 类型定义（使用 TypeScript）
    - 不要生成额外的子组件。
 

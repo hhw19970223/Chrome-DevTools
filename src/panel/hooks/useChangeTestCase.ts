@@ -3,6 +3,7 @@ import { useLoginStore } from "./useLoginStore";
 import { v4 } from "uuid";
 import { traceparent } from "@/utils/cursor";
 import { notifications } from "@mantine/notifications";
+import { host } from "../const";
 
 export function useChangeTestCase() {
   const { loginInfo } = useLoginStore();
@@ -58,7 +59,7 @@ export function useChangeTestCase() {
       // 生成测试用例的提示词
       const promptText = `
 # 任务说明
-现在需要你根据这些需求生成对应的测试用例。
+现在需要你根据这些需求生成对应的测试用例
 
 # 需求内容
 ${requirement}
@@ -75,12 +76,22 @@ ${requirement}
    - **预期结果**：预期的测试结果
    - **优先级**：测试用例的优先级（P0/P1/P2）
 4. 必须同时生成正向用例（正常流程）和反向用例（异常流程、边界条件）
-5. **输出必须严格按照JSON格式**
+5. 生成json数据
 
-# 输出格式
-请严格按以下JSON格式输出：
 
-\`\`\`json
+# 注意事项
+- 生成必须是有效的JSON格式，不要有任何额外的文字说明
+- 正向用例要覆盖主要业务流程
+- 反向用例要覆盖异常情况、边界条件、输入验证等
+- 优先级设置：P0为核心功能，P1为重要功能，P2为一般功能
+- 测试内容要清晰具体，可操作性强
+- 预期结果要明确，便于验证
+
+# 生成json数据
+1. 必须严格按照以下输出格式
+2. **重要：请严格按照以下JSON格式，不要包含任何其他文字说明：**
+3. 生成在 @index.json
+
 {
   "modules": [
     {
@@ -118,20 +129,11 @@ ${requirement}
     }
   ]
 }
-\`\`\`
-
-# 注意事项
-- 输出必须是有效的JSON格式，不要有任何额外的文字说明
-- 正向用例要覆盖主要业务流程
-- 反向用例要覆盖异常情况、边界条件、输入验证等
-- 优先级设置：P0为核心功能，P1为重要功能，P2为一般功能
-- 测试内容要清晰具体，可操作性强
-- 预期结果要明确，便于验证
 `;
 
 
       try {
-        await fetch("https://www.hhw31.com/api/cursor/chat", {
+        await fetch(host + "/api/cursor/chat", {
           method: "POST",
           body: JSON.stringify({
             text: promptText,
@@ -146,10 +148,11 @@ ${requirement}
             uuid: composerId,
             code: '',
             isThink: true,
+            json: '{}'
           }),
         });
 
-        const eventSource = new EventSource(`https://www.hhw31.com/api/cursor/chat?data=${params}`);
+        const eventSource = new EventSource(host + `/api/cursor/chat?data=${params}`);
 
         let code = "";
 
@@ -243,7 +246,7 @@ ${requirement}
         color: 'red',
       });
     } finally {
-      fetch("https://www.hhw31.com/api/cursor/chat", {
+      fetch(host + "/api/cursor/chat", {
         method: "DELETE",
         body: JSON.stringify({
           composerId

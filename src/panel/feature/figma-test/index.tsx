@@ -26,7 +26,7 @@ export function FigmaTest() {
   const {
     changeTestCase,
     thinkingText: thinkingTextCase,
-    text: testCase,
+    text: textCase,
     loading: loadingCase,
   } = useChangeTestCase();
   const onClose = useRef<(() => void) | null>(null);
@@ -105,7 +105,7 @@ export function FigmaTest() {
             setStep((prev) => {
               if (prev === 0) {
                 changeTestThink(
-                  project.images.map((item: any) => {
+                  project.images?.filter((item: any) => !item.filename?.includes('default')).map((item: any) => {
                     const uint8Array = new Uint8Array(item.data);
                     const binary = Array.from(uint8Array, (byte) =>
                       String.fromCharCode(byte)
@@ -130,7 +130,7 @@ export function FigmaTest() {
                 changeTestCase(
                   md,
                   (code) => {
-                    setMd(code);
+                    setJson(code);
                   },
                   (_onClose) => {
                     onClose.current = _onClose;
@@ -228,7 +228,7 @@ export function FigmaTest() {
         <div className="h-full w-full overflow-hidden relative max-w-full max-h-full">
           <Chat
             thinkingText={thinkingTextCase}
-            text={testCase}
+            text={textCase}
             loading={loadingCase}
             json={json}
           />

@@ -15,6 +15,7 @@ import {
 } from "@mantine/core";
 import { notifications } from '@mantine/notifications';
 import { useLoginStore } from "@/panel/hooks/useLoginStore";
+import { host } from "@/panel/const";
 
 const Profile = () => {
   const { 
@@ -44,7 +45,7 @@ const Profile = () => {
 
   useEffect(() => {
     if (loginInfo && cookie && !cursorUser) {
-      fetch("https://www.hhw31.com/api/cursor/me", {
+      fetch(host + "/api/cursor/me", {
         method: "POST",
         body: JSON.stringify({ WorkosCursorSessionToken: cookie }),
       })
@@ -62,7 +63,7 @@ const Profile = () => {
 
   useEffect(() => {
     if (loginInfo && !email) {
-      fetch("https://www.hhw31.com/api/cursor/get-email", {
+      fetch(host + "/api/cursor/get-email", {
         method: "POST",
         body: JSON.stringify({ token: loginInfo.accessToken, traceparent }),
       })
@@ -103,7 +104,7 @@ const Profile = () => {
     }
 
     interval.current = setInterval(() => {
-      fetch("https://www.hhw31.com/api/cursor/login", {
+      fetch(host + "/api/cursor/login", {
         method: "POST",
         body: JSON.stringify({
           traceparent,

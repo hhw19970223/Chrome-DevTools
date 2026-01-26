@@ -189,8 +189,8 @@ export class FigmaCtrl extends BaseCtrl {
   }
 
   public async getAllPages(): Promise<void> {
-    const pages = this.figma?.root.findAll(n => n.type === 'PAGE' && !['封面', 'UI稿', '基础信息', '(删除)', '（删除）'].some(name => n.name?.includes(name))) as PageNode[] || [];
-
+    // const pages = this.figma?.root.findAll(n => n.type === 'PAGE' && !['封面', 'UI稿', '基础信息', '(删除)', '（删除）'].some(name => n.name?.includes(name))) as PageNode[] || [];
+    const pages = [figma.currentPage];
     const getImg = async (node: SceneNode, sectionName?: string): Promise<{ data: Uint8Array, name: string }[] | null> => {
 
       // 判断节点是否符合导出条件

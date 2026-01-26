@@ -159,7 +159,7 @@ export function Table({ data }: TableProps) {
   }
 
   return (
-    <Stack gap="md">
+    <div className='flex flex-col gap-4 h-full w-full overflow-hidden'>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Title order={3}>测试用例列表</Title>
         <Button 
@@ -220,6 +220,6 @@ export function Table({ data }: TableProps) {
       <div style={{ textAlign: 'right', color: '#666' }}>
         共 {flattenedData.length} 条测试用例
       </div>
-    </Stack>
+    </div>
   );
 }

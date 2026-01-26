@@ -1,3 +1,5 @@
+import { host } from "@/panel/const";
+
 export function X7c() {
   const i = new Uint8Array(16);
   return (
@@ -30,7 +32,7 @@ export async function uploadChatLargeData(uuid: string, largeData: any) {
     const end = Math.min(start + CHUNK_SIZE, totalSize);
     const chunkData = dataString.substring(start, end);
     
-    const response = await fetch('https://www.hhw31.com/api/cursor/chat', {
+    const response = await fetch(host + '/api/cursor/chat', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -51,7 +53,7 @@ export async function uploadChatLargeData(uuid: string, largeData: any) {
   }
   
   // 3. 完成上传并合并数据
-  const mergeResponse = await fetch('https://www.hhw31.com/api/cursor/chat', {
+  const mergeResponse = await fetch(host + '/api/cursor/chat', {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ uuid })

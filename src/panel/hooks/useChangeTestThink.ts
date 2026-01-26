@@ -3,6 +3,7 @@ import { useLoginStore } from "./useLoginStore";
 import { v4 } from "uuid";
 import { traceparent, uploadChatLargeData } from "@/utils/cursor";
 import { notifications } from "@mantine/notifications";
+import { host } from "../const";
 
 export function useChangeTestThink() {
   const { loginInfo } = useLoginStore();
@@ -57,6 +58,9 @@ export function useChangeTestThink() {
 
       // 生成优化代码的提示词
       const promptText = `
+${images.map(item => `@${item.filename}`).join(' ')}
+
+
 # 任务说明
 我已将 Figma 上的产品需求细化成多个模块，并转换成图片。图片的命名规则为：
 \`\${一级模块名} --->\${二级模块名} ---> \${name}\`
@@ -105,7 +109,7 @@ export function useChangeTestThink() {
           isThink: true,
         })
 
-        const eventSource = new EventSource(`https://www.hhw31.com/api/cursor/chat?data=${params}`);
+        const eventSource = new EventSource(host + `/api/cursor/chat?data=${params}`);
 
         let code = "";
 
@@ -199,7 +203,7 @@ export function useChangeTestThink() {
         color: 'red',
       });
     } finally {
-      fetch("https://www.hhw31.com/api/cursor/chat", {
+      fetch(host + "/api/cursor/chat", {
         method: "DELETE",
         body: JSON.stringify({
           composerId

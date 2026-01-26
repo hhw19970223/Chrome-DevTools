@@ -3,6 +3,7 @@ import { useLoginStore } from "./useLoginStore";
 import { v4 } from "uuid";
 import { traceparent } from "@/utils/cursor";
 import { notifications } from "@mantine/notifications";
+import { host } from "../const";
 
 export function useChangeMockCode() {
   const { loginInfo } = useLoginStore();
@@ -118,7 +119,7 @@ ${JSON.stringify(ast)}
 
 
       try {
-        await fetch("https://www.hhw31.com/api/cursor/chat", {
+        await fetch(host + "/api/cursor/chat", {
           method: "POST",
           body: JSON.stringify({
             text: promptText,
@@ -136,7 +137,7 @@ ${JSON.stringify(ast)}
           }),
         });
 
-        const eventSource = new EventSource(`https://www.hhw31.com/api/cursor/chat?data=${params}`);
+        const eventSource = new EventSource(host + `/api/cursor/chat?data=${params}`);
 
         let code = "";
 
@@ -223,7 +224,7 @@ ${JSON.stringify(ast)}
         color: 'red',
       });
     } finally {
-      fetch("https://www.hhw31.com/api/cursor/chat", {
+      fetch(host + "/api/cursor/chat", {
         method: "DELETE",
         body: JSON.stringify({
           composerId

@@ -31,7 +31,7 @@ export function Chat({
   return (
     <div
       ref={containerRef}
-      className="flex flex-col gap-4 overflow-auto p-4 py-6 max-h-full"
+      className="flex flex-col gap-4 overflow-auto p-4 py-6 max-h-full [&_.monaco-editor]:!h-[500px]"
     >
       {thinkingText ? (
         <Think
@@ -50,6 +50,7 @@ export function Chat({
 
       {json ? (
         <Editor
+          height="500px"
           defaultLanguage={"json"}
           defaultValue={json}
           theme="vs-dark"

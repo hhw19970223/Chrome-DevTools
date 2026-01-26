@@ -79,7 +79,6 @@ export function useChangeCode() {
 
 3. **样式转换**：
    - 将所有内联样式和 style 标签中的 CSS 转换为 Tailwind CSS 类
-   - 如果Tailwind CSS 类是默认的样式直接帮我去掉不要生成到代码中
    - Flexbox 布局转换为 flex 相关类
    - Grid 布局转换为 grid 相关类
    - 定位属性转换为 relative/absolute/fixed 类
@@ -94,6 +93,7 @@ export function useChangeCode() {
    - 确保代码格式规范，使用 2 空格缩进
    - 添加必要的注释说明复杂逻辑
    - 确保可读性和可维护性
+   - 冗余,多余的Tailwind CSS 类,在不改变样式前提下。请帮我优化
    
 6. **svg**
    - 在同文件中生成svg组件进行引入，不要生成额外的文件。 不要生成额外的子组件。不要用export default导出。

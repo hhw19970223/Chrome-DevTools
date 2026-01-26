@@ -101,6 +101,7 @@ export function useChangeCode() {
 
 
 ## 输出格式：
+请直接输出完整的 TypeScript 代码文件。
 只返回完整的 React 组件代码，不要添加任何额外说明、markdown 标记或代码块符号。
 代码应该可以直接在 React 项目中使用。
 `;

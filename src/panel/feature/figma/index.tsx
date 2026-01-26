@@ -120,7 +120,9 @@ export function Figma() {
               disabled={loadingMock}
               onClick={() => {
                 changeMockCode(ast, (newCode) => {
-                  setMock(newCode);
+                  if (newCode) {
+                    setMock(newCode);
+                  }
                 }, (_onClose) => {
                   onCloseMock.current = _onClose;
                 });
@@ -148,8 +150,10 @@ export function Figma() {
               disabled={loading}
               onClick={() => {
                 changeCode(code, (newCode) => {
-                  setCode(newCode);
-                  setIsReact(true); // 切换到 React 模式
+                  if (newCode) {
+                    setCode(newCode);
+                    setIsReact(true); // 切换到 React 模式
+                  }
                 }, (_onClose) => {
                   onClose.current = _onClose;
                 });

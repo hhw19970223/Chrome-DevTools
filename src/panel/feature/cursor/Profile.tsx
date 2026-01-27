@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { v4 } from "uuid";
 import { traceparent } from "@/utils/cursor";
 import { TabsUtil } from "@/utils/tabs";
@@ -11,7 +11,10 @@ import {
   Text, 
   Loader,
   Stack,
-  Box
+  Box,
+  Modal,
+  Textarea,
+  Group
 } from "@mantine/core";
 import { notifications } from '@mantine/notifications';
 import { useLoginStore } from "@/panel/hooks/useLoginStore";
@@ -27,6 +30,8 @@ const Profile = () => {
     clearState 
   } = useLoginStore();
   const interval = useRef<NodeJS.Timeout | null>(null);
+  const [modalOpened, setModalOpened] = useState(false);
+  const [jsonInput, setJsonInput] = useState('');
 
   const cleanLogin = () => {
     clearState();
@@ -132,17 +137,78 @@ const Profile = () => {
     }
   }, []);
 
+  // 打开设置弹窗
+  const handleOpenModal = () => {
+    setJsonInput('');
+    setModalOpened(true);
+  };
+
+  // 保存 JSON 设置
+  const handleSaveJson = () => {
+    try {
+      const parsedJson = JSON.parse(jsonInput);
+      setState({ loginInfo: parsedJson });
+      setModalOpened(false);
+      showToast('success', '登录信息设置成功');
+    } catch (error) {
+      showToast('error', 'JSON 格式错误，请检查输入');
+    }
+  };
+
   return (
-    <Box
-      style={{
-        position: 'fixed',
-        top: '0px',
-        right: '0px',
-        zIndex: 1000,
-        padding: '16px',
-        backgroundColor: 'rgba(255, 255, 255, 1)',
-      }}
-    >
+    <>
+      <Modal
+        opened={modalOpened}
+        onClose={() => setModalOpened(false)}
+        title="设置登录信息"
+        size="lg"
+        centered
+      >
+        <Stack gap="md">
+          <Text size="sm" c="dimmed">
+            请输入有效的 JSON 格式登录信息
+          </Text>
+          <Textarea
+            placeholder='{"accessToken": "your-token", ...}'
+            value={jsonInput}
+            onChange={(e) => setJsonInput(e.currentTarget.value)}
+            minRows={10}
+            maxRows={15}
+            styles={{
+              input: {
+                fontFamily: 'monospace',
+                fontSize: '13px',
+              }
+            }}
+          />
+          <Group justify="flex-end">
+            <Button
+              variant="outline"
+              onClick={() => setModalOpened(false)}
+            >
+              取消
+            </Button>
+            <Button
+              variant="filled"
+              color="blue"
+              onClick={handleSaveJson}
+            >
+              确认
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
+
+      <Box
+        style={{
+          position: 'fixed',
+          top: '0px',
+          right: '0px',
+          zIndex: 1000,
+          padding: '16px',
+          backgroundColor: 'rgba(255, 255, 255, 1)',
+        }}
+      >
       {loginInfo ? (
         <Menu shadow="md" width={240}>
           <Menu.Target>
@@ -183,6 +249,15 @@ const Profile = () => {
           </Menu.Dropdown>
         </Menu>
       ) : (
+        <div className="flex gap-2 items-center">
+          <Button
+          variant="filled"
+          color="blue"
+          radius="md"
+          onClick={handleOpenModal}
+        >
+          设置登录信息
+        </Button>
         <Button
           variant="filled"
           color="blue"
@@ -193,8 +268,10 @@ const Profile = () => {
         >
           登录
         </Button>
+        </div>
       )}
     </Box>
+    </>
   );
 };
 

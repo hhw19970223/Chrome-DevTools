@@ -611,12 +611,15 @@ function replaceVar(css: any, boundVariables: any, resolvedVariableModes: any) {
       }
       varValue = css[key];
       if (varValue.includes("var(")) {
-        css[key] = css[key].replace(/var\(\s*[^,]+,\s*([^)]+)\s*\)/g, "$1");
 
         const arr = css[key].split(" ");
         const newArr = arr.map((item: string) => {
           if (item.includes("var(")) {
-            return map[item] || item;
+            if (map[item]) {
+              return map[item];
+            }
+            const varValue = css[key].replace(/var\(\s*[^,]+,\s*([^)]+)\s*\)/g, "$1");
+            return varValue || item;
           }
           return item;
         });

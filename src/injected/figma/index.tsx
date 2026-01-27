@@ -194,7 +194,7 @@ export class FigmaCtrl extends BaseCtrl {
     const getImg = async (node: SceneNode, sectionName?: string): Promise<{ data: Uint8Array, name: string }[] | null> => {
 
       // 判断节点是否符合导出条件
-      if (node.type === 'FRAME' && ['default', 'Frame'].some(name => node.name?.toLocaleLowerCase()?.includes(name.toLocaleLowerCase()))) {
+      if (node.type === 'FRAME' && ['default', 'Frame', 'Body'].some(name => node.name?.toLocaleLowerCase()?.includes(name.toLocaleLowerCase()))) {
         try {
           // 导出节点为 PNG 图片
           const bytes = await node.exportAsync({

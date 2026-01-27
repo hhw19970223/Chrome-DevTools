@@ -198,7 +198,7 @@ export function FigmaTest() {
         </button>
       </div>
       <Split
-        sizes={[40, 30, 10, 10, 10]} // 初始宽度比例
+        sizes={[40, 30, 20, 10, 0]} // 初始宽度比例
         minSize={5} // 每个面板最小宽度
         gutterSize={8} // 拖动条宽度
         style={{ display: "flex", flex: "1 1 0%", overflow: "hidden" }}
@@ -229,6 +229,7 @@ export function FigmaTest() {
             text={text}
             loading={loadingThink}
             md={md}
+            setMd={setMd}
           />
         </div>
         <div className="h-full w-full overflow-hidden relative max-w-full max-h-full">
@@ -243,7 +244,7 @@ export function FigmaTest() {
           {showData ? <Table data={showData} /> : null}
         </div>
         <div className="h-full w-full overflow-hidden relative max-w-full max-h-full">
-          {step < 1 ? <MonacoEditor language="md" content={promptThink} onChange={setPromptThink} /> : <MonacoEditor language="md" content={promptCase} onChange={setPromptCase} />}
+          {step < 1 || loadingThink || !md ? <MonacoEditor language="md" content={promptThink} onChange={setPromptThink} /> : <MonacoEditor language="md" content={promptCase} onChange={setPromptCase} />}
         </div>
       </Split>
     </div>

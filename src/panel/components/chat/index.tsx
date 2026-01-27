@@ -1,8 +1,9 @@
 import { Bubble, Think } from "@ant-design/x";
 import LineLoading from "../loading";
 import XMarkdown from "@ant-design/x-markdown";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Editor } from "@monaco-editor/react";
+import type { editor as MonacoEditor } from "monaco-editor";
 
 export function Chat({
   text,
@@ -10,23 +11,45 @@ export function Chat({
   loading,
   md,
   json,
+  setMd,
 }: {
   text: string;
   thinkingText: string;
   loading: boolean;
   md?: string;
   json?: string;
+  setMd?: (md: string) => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const editorRef = useRef<MonacoEditor.IStandaloneCodeEditor | null>(null);
 
   useEffect(() => {
-    if (containerRef.current) {
-      containerRef.current.scrollTo({
-        top: containerRef.current.scrollHeight,
-        behavior: "smooth",
-      });
-    }
+    setTimeout(() => {
+      if (containerRef.current) {
+        containerRef.current.scrollTo({
+          top: containerRef.current.scrollHeight,
+          behavior: "smooth",
+        });
+      }
+    }, 500);
   }, [text, thinkingText, md, json]);
+
+  const handleDoubleClick = () => {
+    setIsEditing(true);
+  };
+
+  const handleBlur = () => {
+    setIsEditing(false);
+  };
+
+  const handleEditorMount = (editor: MonacoEditor.IStandaloneCodeEditor) => {
+    editorRef.current = editor;
+    // 监听编辑器失焦事件
+    editor.onDidBlurEditorText(() => {
+      handleBlur();
+    });
+  };
 
   return (
     <div
@@ -46,7 +69,27 @@ export function Chat({
 
       {text ? <Bubble content={<XMarkdown content={text} />} /> : null}
 
-      {md ? <Bubble content={<XMarkdown content={md} />} /> : null}
+      {md ? (
+        isEditing ? (
+          <Editor
+            value={md}
+            height="500px"
+            defaultLanguage={"md"}
+            onChange={(value) => setMd?.(value || "")}
+            defaultValue={json}
+            theme="vs-dark"
+            loading={<span></span>}
+            onMount={handleEditorMount}
+            options={{
+              minimap: { enabled: false },
+            }}
+          />
+        ) : (
+          <div onDoubleClick={handleDoubleClick} className="cursor-pointer">
+            <Bubble content={<XMarkdown content={md} />} />
+          </div>
+        )
+      ) : null}
 
       {json ? (
         <Editor
@@ -57,7 +100,7 @@ export function Chat({
           loading={<span></span>}
           options={{
             minimap: { enabled: false },
-            readOnly: true
+            readOnly: true,
           }}
         />
       ) : null}

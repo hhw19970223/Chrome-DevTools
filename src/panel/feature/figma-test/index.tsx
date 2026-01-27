@@ -5,10 +5,11 @@ import { Text } from "@mantine/core";
 import Split from "react-split";
 import { BinaryImage } from "@/panel/components/binary-image";
 import { Chat } from "@/panel/components/chat";
-import { useChangeTestThink } from "@/panel/hooks/useChangeTestThink";
-import { useChangeTestCase } from "@/panel/hooks/useChangeTestCase";
+import { promptTextThink, useChangeTestThink } from "@/panel/hooks/useChangeTestThink";
+import { promptTextCase, useChangeTestCase } from "@/panel/hooks/useChangeTestCase";
 import { notifications } from "@mantine/notifications";
 import { Table } from "./Table";
+import { MonacoEditor } from "../figma/monaco-editor";
 
 export function FigmaTest() {
   const [isDev, setIsDev] = useState<boolean>(false);
@@ -33,6 +34,9 @@ export function FigmaTest() {
   const [md, setMd] = useState("");
   const [json, setJson] = useState("");
   const [showData, setShowData] = useState<any>(null);
+
+  const [promptThink, setPromptThink] = useState(promptTextThink);
+  const [promptCase, setPromptCase] = useState(promptTextCase);
 
   useEffect(() => {
     getWindowProperty?.("figma").then((res) => {
@@ -116,6 +120,7 @@ export function FigmaTest() {
                       data: base64,
                     };
                   }),
+                  promptThink,
                   (code) => {
                     setMd(code);
                   },
@@ -129,6 +134,7 @@ export function FigmaTest() {
               } else if (prev === 1) {
                 changeTestCase(
                   md,
+                  promptCase,
                   (code) => {
                     setJson(code);
                   },
@@ -192,7 +198,7 @@ export function FigmaTest() {
         </button>
       </div>
       <Split
-        sizes={[40, 40, 10, 10]} // 初始宽度比例
+        sizes={[40, 30, 10, 10, 10]} // 初始宽度比例
         minSize={5} // 每个面板最小宽度
         gutterSize={8} // 拖动条宽度
         style={{ display: "flex", flex: "1 1 0%", overflow: "hidden" }}
@@ -235,6 +241,9 @@ export function FigmaTest() {
         </div>
         <div className="h-full w-full overflow-hidden relative max-w-full max-h-full">
           {showData ? <Table data={showData} /> : null}
+        </div>
+        <div className="h-full w-full overflow-hidden relative max-w-full max-h-full">
+          {step < 1 ? <MonacoEditor language="md" content={promptThink} onChange={setPromptThink} /> : <MonacoEditor language="md" content={promptCase} onChange={setPromptCase} />}
         </div>
       </Split>
     </div>

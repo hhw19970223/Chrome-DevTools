@@ -5,64 +5,9 @@ import { traceparent } from "@/utils/cursor";
 import { notifications } from "@mantine/notifications";
 import { host } from "../const";
 
-export function useChangeTestCase() {
-  const { loginInfo } = useLoginStore();
-
-  const [status, setStatus] = useState<
-  "submitted" | "streaming" | "ready" | "error"
->("ready");
-
-  const [text, setText] = useState<string>("");
-  const [thinkingText, setThinkingText] = useState<string>("");
-  
-  const loading = useMemo(() => status === "streaming", [status]);
-
-  const changeTestCase = useCallback(async (requirement: any, onChange: (code: string) => void, setOnClose: (onClose: () => void) => void, onError: () => void) => {
-    if (loading) return;
-
-    setThinkingText('');
-    setText('');
-    onChange('');
-    
-    if (!loginInfo?.accessToken) {
-      notifications.show({
-        title: '错误',
-        message: '请先登录',
-        color: 'red',
-      });
-      return;
-    }
-
-    if (!requirement) {
-      notifications.show({
-        title: '提示',
-        message: '数据为空',
-        color: 'orange',
-      });
-      return;
-    }
-
-    const composerId = v4();
-
-    try {
-      const bubbleId = v4();
-      const requestId = v4();
-
-      const params = encodeURIComponent(
-        JSON.stringify({
-          uuid: composerId,
-        })
-      );
-
-      setStatus("streaming");
-
-      // 生成测试用例的提示词
-      const promptText = `
+export const promptTextCase = `
 # 任务说明
 现在需要你根据这些需求生成对应的测试用例
-
-# 需求内容
-${requirement}
 
 # 要求
 1. 先罗列出所有模块的功能点
@@ -132,11 +77,65 @@ ${requirement}
 `;
 
 
+export function useChangeTestCase() {
+  const { loginInfo } = useLoginStore();
+
+  const [status, setStatus] = useState<
+  "submitted" | "streaming" | "ready" | "error"
+>("ready");
+
+  const [text, setText] = useState<string>("");
+  const [thinkingText, setThinkingText] = useState<string>("");
+  
+  const loading = useMemo(() => status === "streaming", [status]);
+
+  const changeTestCase = useCallback(async (requirement: any, promptText: string, onChange: (code: string) => void, setOnClose: (onClose: () => void) => void, onError: () => void) => {
+    if (loading) return;
+
+    setThinkingText('');
+    setText('');
+    onChange('');
+    
+    if (!loginInfo?.accessToken) {
+      notifications.show({
+        title: '错误',
+        message: '请先登录',
+        color: 'red',
+      });
+      return;
+    }
+
+    if (!requirement) {
+      notifications.show({
+        title: '提示',
+        message: '数据为空',
+        color: 'orange',
+      });
+      return;
+    }
+
+    const composerId = v4();
+
+    try {
+      const bubbleId = v4();
+      const requestId = v4();
+
+      const params = encodeURIComponent(
+        JSON.stringify({
+          uuid: composerId,
+        })
+      );
+
+      setStatus("streaming");
+
+
       try {
         await fetch(host + "/api/cursor/chat", {
           method: "POST",
           body: JSON.stringify({
-            text: promptText,
+            text: promptText + `           
+# 需求内容
+${requirement}`,
             token: loginInfo.accessToken,
             traceparent,
             xRequestId: requestId,

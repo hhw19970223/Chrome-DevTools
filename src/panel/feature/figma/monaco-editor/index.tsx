@@ -9,7 +9,7 @@ import './config';
 interface Props {
   language: string
   content: string,
-  onChange: (value?: string) => void,
+  onChange: (value: string) => void,
   theme?: 'light' | 'vs-dark'
 }
 export function MonacoEditor({language, content, onChange, theme = 'vs-dark'}: Props) {
@@ -35,7 +35,9 @@ export function MonacoEditor({language, content, onChange, theme = 'vs-dark'}: P
         editorRef.current = editor;
       }}
       className=''
-      onChange={onChange}
+      onChange={(value) => {
+        onChange(value || '')
+      }}
       theme={theme}
       loading={<span></span>}
       options={{

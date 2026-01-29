@@ -74,8 +74,19 @@ export function FigmaTest() {
       <div className="flex gap-4 p-4 bg-gray-50 border-b">
         <button
           onClick={() => {
-            setLoading(true);
-            evalInWindow?.("window.hhw.figmaCtrl.getAllPages()");
+            getWindowProperty?.("window.hhw.figmaCtrl.getAllPages").then((res) => {
+              if (res) {
+                setLoading(true);
+                evalInWindow?.("window.hhw.figmaCtrl.getAllPages()");
+              } else {
+                notifications.show({
+                  title: "错误",
+                  message: "数据异常,请刷新页面",
+                  color: "red",
+                });
+              }
+            });
+           
           }}
           disabled={loading}
           className="px-3 py-1.5 text-sm font-medium bg-blue-500 text-white rounded-md hover:bg-blue-600 active:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-1.5 shadow-sm hover:shadow disabled:shadow-none"

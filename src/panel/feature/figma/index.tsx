@@ -27,7 +27,15 @@ export function Figma() {
 
   useEffect(() => {
     getWindowProperty?.("figma").then((res) => {
-      setIsDev(!!res);
+      if (res) {
+        setIsDev(true);
+      }
+    });
+
+    getWindowProperty?.("mg").then((res) => {
+      if (res) {
+        setIsDev(true);
+      }
     });
 
     onMessage(MESSAGE_TYPES.FIGMA, (payload) => {

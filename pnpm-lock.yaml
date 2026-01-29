@@ -26,6 +26,9 @@ importers:
       '@mantine/notifications':
         specifier: ^8.3.10
         version: 8.3.13(@mantine/core@7.17.8(@mantine/hooks@7.17.8(react@18.3.1))(@types/react@18.3.27)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@mantine/hooks@7.17.8(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@mastergo/plugin-typings':
+        specifier: ^2.10.0
+        version: 2.10.0
       '@monaco-editor/react':
         specifier: ^4.7.0
         version: 4.7.0(monaco-editor@0.55.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -642,6 +645,9 @@ packages:
     resolution: {integrity: sha512-pnHHwiffGfaqLFxuyJIuU1P6+3zOd7bfBRVFFzIEDyUbPJs7dmVUFt31bry5FokrBfCjNWyg2XfyAQqIwd2LLA==}
     peerDependencies:
       react: ^18.x || ^19.x
+
+  '@mastergo/plugin-typings@2.10.0':
+    resolution: {integrity: sha512-5mi/yzjJyagi1/BADqzCxM7cw5oWY5HL1UN+pT6csph/uBnGV1FZzOLFoTljHCbz48S5E7sF4WizCEeyuSclcA==}
 
   '@mermaid-js/parser@0.6.3':
     resolution: {integrity: sha512-lnjOhe7zyHjc+If7yT4zoedx2vo4sHaTmtkl1+or8BRTnCtDmcTpAjpzDSfCZrshM5bCoz0GyidzadJAH1xobA==}
@@ -2822,6 +2828,8 @@ snapshots:
   '@mantine/store@8.3.13(react@18.3.1)':
     dependencies:
       react: 18.3.1
+
+  '@mastergo/plugin-typings@2.10.0': {}
 
   '@mermaid-js/parser@0.6.3':
     dependencies:

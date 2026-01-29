@@ -1,10 +1,16 @@
 import "@figma/plugin-typings";
+import "@mastergo/plugin-typings";
 
 declare global {
   interface Window {
     figma: any;
+    mg: any;
+    libraryInfoMgr?: any;
+    webpackJsonp?: any;
     hhw: {
       figmaCtrl?: any;
+      mgCtrl?: any;
+      
     };
     React: any;
     ReactDOM: any;

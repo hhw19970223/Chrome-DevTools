@@ -6,19 +6,29 @@
 import { InjectedScriptBridge } from '../utils/bridge';
 import { MESSAGE_TYPES } from '../utils/message-types';
 import { FigmaCtrl } from './figma';
+import { MgCtrl } from './mastergo';
 
 window.hhw = {};
 
 class InjectedScript {
   private _bridge: InjectedScriptBridge;
   private _eventListeners: Map<string, EventListener> = new Map();
-  private _figmaCtrl: FigmaCtrl;
+  private _figmaCtrl: FigmaCtrl | undefined;
+  private _mgCtrl: MgCtrl | undefined;
 
   constructor() {
     this._bridge = new InjectedScriptBridge();
     this.init();
-    this._figmaCtrl = new FigmaCtrl(this._bridge);
-    window.hhw.figmaCtrl = this._figmaCtrl;
+
+    if (window.location.host.includes('figma')) {
+      this._figmaCtrl = new FigmaCtrl(this._bridge);
+      window.hhw.figmaCtrl = this._figmaCtrl;
+    }
+
+    if (window.location.host.includes('mastergo')) {
+      this._mgCtrl = new MgCtrl(this._bridge);
+      window.hhw.mgCtrl = this._mgCtrl;
+    }
   }
 
   private init() {

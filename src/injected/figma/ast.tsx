@@ -101,7 +101,7 @@ function convertSegmentStylesToCSS(segment: any): Record<string, string> {
   }
 
   // 字重（如果单独指定）
-  if (segment.fontWeight !== undefined) {
+  if (segment.fontWeight !== undefined && segment.fontWeight !== 400) {
     styles.fontWeight = String(segment.fontWeight);
   }
 
@@ -172,6 +172,16 @@ async function convertNodeToHTML(
   const text = getTextContent(node);
 
   let styles: Record<string, string> = {};
+
+  if (!node.isVisible) {
+    return {
+      tag,
+      attributes,
+      styles,
+      children: [],
+      hidden: true
+    }
+  }
 
   // 获取 CSS 样式
   if (includeStyles && "getCSSAsync" in node) {

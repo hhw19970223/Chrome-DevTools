@@ -173,16 +173,6 @@ async function convertNodeToHTML(
 
   let styles: Record<string, string> = {};
 
-  if (!node.isVisible) {
-    return {
-      tag,
-      attributes,
-      styles,
-      children: [],
-      hidden: true
-    }
-  }
-
   // 获取 CSS 样式
   if (includeStyles && "getCSSAsync" in node) {
     try {

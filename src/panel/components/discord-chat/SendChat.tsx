@@ -202,12 +202,12 @@ export function SendChat({
     <div className="flex flex-col gap-4 overflow-hidden h-full max-h-full w-full px-4">
       <div
         ref={containerRef}
-        className="flex flex-col gap-4 overflow-auto p-4 py-2 max-h-full flex-1"
+        className="flex flex-col gap-4 overflow-auto p-3 max-h-full flex-1"
       >
         {messages.map((item, index) => (
           <div
             key={index}
-            className="flex flex-col gap-2 bg-black/5 rounded-lg w-[80%] p-6"
+            className="flex flex-col gap-2 bg-black/5 rounded-lg w-full px-6 py-3"
           >
             <Bubble content={<XMarkdown content={item.value} />} />
             {item.thinkingText ? (

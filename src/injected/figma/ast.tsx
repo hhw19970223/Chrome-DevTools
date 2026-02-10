@@ -618,12 +618,12 @@ function replaceVar(css: any, boundVariables: any, resolvedVariableModes: any) {
             if (map[item]) {
               return map[item];
             }
-            const varValue = css[key].replace(/var\(\s*[^,]+,\s*([^)]+)\s*\)/g, "$1");
+            const varValue = item.replace(/var\(\s*[^,]+,\s*([^)]+)\s*\)/g, "$1");
             return varValue || item;
           }
           return item;
         });
-        css[key] = newArr.join(" ");
+        css[key] = newArr.join(" ").replace(/var\(\s*[^,]+,\s*([^)]+)\s*\)/g, "$1");
       }
     }
 

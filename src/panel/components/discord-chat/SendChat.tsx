@@ -3,7 +3,7 @@ import { Textarea, ActionIcon } from "@mantine/core";
 import { IconSend } from "@tabler/icons-react";
 import { Notifications } from "@mantine/notifications";
 import { useTranslation } from "@/panel/hooks/useTranslation";
-import { Bubble, Think } from "@ant-design/x";
+import { Actions, Bubble, Think } from "@ant-design/x";
 import XMarkdown from "@ant-design/x-markdown";
 import LineLoading from "../loading";
 
@@ -37,7 +37,7 @@ export function SendChat({
     thinkingText: string;
     loading: boolean;
     md?: string;
-  } | null>(null);
+  }[] | null>(null);
 
   useEffect(() => {
     return () => {
@@ -116,7 +116,7 @@ export function SendChat({
         setMessages((messages) => {
           return [...messages, info];
         });
-        return info;
+        return [info];
       });
 
       changeTranslation(
@@ -126,10 +126,10 @@ export function SendChat({
         data,
         (code) => {
           setCurrentMessage((currentMessage) => {
-            if (currentMessage) {
-              return { ...currentMessage, md: code };
+            if (currentMessage?.[0]) {
+              currentMessage[0].md = code;
             }
-            return currentMessage;
+            return currentMessage ? [...currentMessage] : null;
           });
           setMessages((messages) => {
             return [...messages];
@@ -140,17 +140,16 @@ export function SendChat({
         },
         (text: string, thinkingText: string) => {
           setCurrentMessage((currentMessage) => {
-            if (currentMessage) {
+            if (currentMessage?.[0]) {
               if (text) {
-                currentMessage.text = text;
+                currentMessage[0].text = text;
               }
               if (thinkingText) {
-                currentMessage.thinkingText = thinkingText;
+                currentMessage[0].thinkingText = thinkingText;
               }
             }
 
-            console.log('currentMessage', currentMessage);
-            return currentMessage ? { ...currentMessage! } : null;
+            return currentMessage ? [ ...currentMessage ] : null;
           });
           setMessages((messages) => {
             console.log('messages', messages);
@@ -189,6 +188,16 @@ export function SendChat({
     }
   }, [loading]);
 
+  const actionItems = (content: string) => [
+    {
+      key: 'copy',
+      label: 'copy',
+      actionRender: () => {
+        return <Actions.Copy text={content} />;
+      },
+    }
+  ];
+
   return (
     <div className="flex flex-col gap-4 overflow-hidden h-full max-h-full w-full px-4">
       <div
@@ -217,7 +226,9 @@ export function SendChat({
             ) : null}
 
             {item.md ? (
-              <Bubble content={<XMarkdown content={item.md} />} />
+              <Bubble content={<XMarkdown content={item.md} />}  footer={() => (
+                <Actions items={actionItems(item.md!)} onClick={() => navigator.clipboard.writeText(item.md!)} />
+              )} />
             ) : null}
 
             {item.loading ? (

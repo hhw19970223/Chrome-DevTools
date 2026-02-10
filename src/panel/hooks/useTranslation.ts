@@ -122,8 +122,8 @@ export function useTranslation() {
 
             if (streamUnifiedChatResponse?.thinking?.text != null) {
               console.warn(streamUnifiedChatResponse?.thinking?.text);
-              onUpdate?.('', text + streamUnifiedChatResponse.thinking.text);
               setThinkingText((text) => {
+                onUpdate?.('', text + streamUnifiedChatResponse.thinking.text);
                 return text + streamUnifiedChatResponse.thinking.text;
               })
             }

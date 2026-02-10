@@ -118,3 +118,4 @@ export class GMitt {
   }
 }
 
+export const gMitt = new GMitt();

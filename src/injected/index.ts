@@ -3,8 +3,11 @@
  * 运行在页面上下文中，可以访问页面的全局变量和函数
  */
 
+// @ts-ignore //提前初始化
+import { discordToken } from '@/utils';
 import { InjectedScriptBridge } from '../utils/bridge';
 import { MESSAGE_TYPES } from '../utils/message-types';
+import { DiscordCtrl } from './dicord';
 import { FigmaCtrl } from './figma';
 import { MgCtrl } from './mastergo';
 
@@ -15,6 +18,7 @@ class InjectedScript {
   private _eventListeners: Map<string, EventListener> = new Map();
   private _figmaCtrl: FigmaCtrl | undefined;
   private _mgCtrl: MgCtrl | undefined;
+  private _discordCtrl: DiscordCtrl | undefined;
 
   constructor() {
     this._bridge = new InjectedScriptBridge();
@@ -28,6 +32,11 @@ class InjectedScript {
     if (window.location.host.includes('mastergo')) {
       this._mgCtrl = new MgCtrl(this._bridge);
       window.hhw.mgCtrl = this._mgCtrl;
+    }
+
+    if (window.location.host.includes('discord')) {
+      this._discordCtrl = new DiscordCtrl(this._bridge);
+      window.hhw.discordCtrl = this._discordCtrl;
     }
   }
 

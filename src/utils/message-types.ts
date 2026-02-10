@@ -25,6 +25,7 @@ export const MESSAGE_TYPES = {
 
   //功能模块
   FIGMA: 'FIGMA',
+  DISCORD: 'DISCORD',
 
 } as const;
 

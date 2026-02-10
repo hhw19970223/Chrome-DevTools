@@ -7,10 +7,11 @@ declare global {
     mg: any;
     libraryInfoMgr?: any;
     webpackJsonp?: any;
+    webpackChunkdiscord_app?: any;
     hhw: {
       figmaCtrl?: any;
       mgCtrl?: any;
-      
+      discordCtrl?: any;
     };
     React: any;
     ReactDOM: any;

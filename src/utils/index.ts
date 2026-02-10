@@ -11,6 +11,18 @@ export * from './dom';
 export * from './bridge';
 export * from './devtools-bridge';
 
+export const getlocalStorage = localStorage.getItem.bind(localStorage);
+
+export let discordToken = getlocalStorage('token') || '';
+
+let setItem = localStorage.setItem.bind(localStorage);
+localStorage.setItem = (key, value) => {
+  setItem(key, value);
+  if (key === 'token' && value) {
+    discordToken = value;
+  }
+};
+
 export function createReactive(data: any, onChange: (info: {type: 'add' | 'set' | 'delete', path: string, oldValue: any, newValue: any}) => void, keys: string[]) {
   const proxyCache = new WeakMap();
   let paused = false;

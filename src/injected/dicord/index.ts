@@ -52,17 +52,34 @@ export class DiscordCtrl extends BaseCtrl {
 
     // 创建 ClipboardEvent 模拟粘贴
     const dataTransfer = new DataTransfer();
-    dataTransfer.setData('text/plain', value);
-    
+    dataTransfer.setData("text/plain", value);
+
     // 触发 paste 事件
-    const pasteEvent = new ClipboardEvent('paste', {
+    const pasteEvent = new ClipboardEvent("paste", {
       bubbles: true,
       cancelable: true,
       clipboardData: dataTransfer,
     });
-    
+
     textarea.dispatchEvent(pasteEvent);
+
     console.log("已模拟粘贴操作:", value);
+
+    setTimeout(() => {
+      // 模拟按下 Enter 键
+      const enterEvent = new KeyboardEvent("keydown", {
+        key: "Enter",
+        code: "Enter",
+        keyCode: 13,
+        which: 13,
+        bubbles: true,
+        cancelable: true,
+      });
+
+      textarea.dispatchEvent(enterEvent);
+
+      console.log("已模拟按下 Enter 键");
+    }, 1000);
   }
 
   /**

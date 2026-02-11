@@ -34,7 +34,7 @@ export class DiscordCtrl extends BaseCtrl {
     // Discord 使用 contenteditable div 作为输入框
     return document
       .querySelector("[class*='slateContainer_']")
-      ?.querySelector("[class*='slateTextArea_']") as HTMLElement;
+      ?.querySelector("[class*='editor__']") as HTMLElement;
   }
 
   /**

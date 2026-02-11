@@ -7,12 +7,13 @@ import { editor } from 'monaco-editor';
 import './config';
 
 interface Props {
-  language: string
-  content: string,
-  onChange: (value: string) => void,
-  theme?: 'light' | 'vs-dark'
+  language: string;
+  content: string;
+  onChange: (value: string) => void;
+  theme?: 'light' | 'vs-dark';
+  options?: editor.IStandaloneEditorConstructionOptions;
 }
-export function MonacoEditor({language, content, onChange, theme = 'vs-dark'}: Props) {
+export function MonacoEditor({language, content, onChange, theme = 'vs-dark', options}: Props) {
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const monacoRef = useRef<any>(null);
 
@@ -42,6 +43,7 @@ export function MonacoEditor({language, content, onChange, theme = 'vs-dark'}: P
       loading={<span></span>}
       options={{
         minimap: { enabled: false },
+        ...options, // 允许外部传入自定义配置
       }}
       beforeMount={(monacoInstance) => {
         console.log(monacoInstance.languages.getLanguages());

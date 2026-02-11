@@ -10,7 +10,7 @@ import { SendChat } from "@/panel/components/discord-chat/SendChat";
 import { StorageUtil } from "@/utils/storage";
 
 const DISCORD_PROMPT_CACHE_KEY = 'discord_prompt_cache';
-const DEFAULT_PROMPT = `请帮我根据海外用户的表达习惯以及用户的聊天习惯，自动调整并且翻译。`;
+const DEFAULT_PROMPT = `请帮我根据海外欧美用户的表达习惯，并且结合SaaS产品的售后服务用语，自动调整内容并且翻译，稍微正式一点。`;
 
 export function Discord() {
   const { onMessage, offMessage, evalInWindow } = useDevToolsBridge();
@@ -94,7 +94,15 @@ export function Discord() {
     <SendChat authorization={authorization} language={language} prompt={prompt} />
   </div>
   <div className="h-full w-full overflow-hidden relative max-w-full max-h-full">
-    <MonacoEditor language="md" content={prompt} onChange={setPrompt} /> 
+    <MonacoEditor 
+      language="md" 
+      content={prompt} 
+      onChange={setPrompt}
+      options={{
+        wordWrap: 'on', // 自动换行
+        wrappingIndent: 'same', // 换行后的缩进方式
+      }}
+    /> 
   </div>
 </Split></div>;
 }

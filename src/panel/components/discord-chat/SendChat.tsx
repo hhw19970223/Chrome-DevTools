@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { Textarea, ActionIcon } from "@mantine/core";
-import { IconSend } from "@tabler/icons-react";
+import { IconSend, IconEdit } from "@tabler/icons-react";
 import { Notifications } from "@mantine/notifications";
 import { useTranslation } from "@/panel/hooks/useTranslation";
 import { Actions, Bubble, Think } from "@ant-design/x";
 import XMarkdown from "@ant-design/x-markdown";
 import LineLoading from "../loading";
+import { useDevToolsBridge } from "@/panel/hooks/useDevToolsBridge";
+import { MESSAGE_TYPES } from "@/utils";
 
 export function SendChat({
   authorization,
@@ -27,17 +29,20 @@ export function SendChat({
   >([]);
   const [inputValue, setInputValue] = useState("");
   const [isSending, setIsSending] = useState(false);
-
+  const { sendToContent, getWindowProperty } = useDevToolsBridge();
   const containerRef = useRef<HTMLDivElement>(null);
   const onClose = useRef<(() => void) | null>(null);
   const { changeTranslation, loading } = useTranslation();
-  const [_currentMessage, setCurrentMessage] = useState<{
-    text: string;
-    value: string;
-    thinkingText: string;
-    loading: boolean;
-    md?: string;
-  }[] | null>(null);
+  const [_currentMessage, setCurrentMessage] = useState<
+    | {
+        text: string;
+        value: string;
+        thinkingText: string;
+        loading: boolean;
+        md?: string;
+      }[]
+    | null
+  >(null);
 
   useEffect(() => {
     return () => {
@@ -69,15 +74,16 @@ export function SendChat({
       // 例如: https://discord.com/channels/@me/1468063254436909244
       const getChannelId = (): Promise<string | null> => {
         return new Promise((resolve) => {
-          chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-            const currentTab = tabs[0];
-            if (currentTab?.url) {
-              const match = currentTab.url.match(/\/channels\/[^\/]+\/(\d+)/);
-              resolve(match ? match[1] : null);
-            } else {
-              resolve(null);
+          getWindowProperty?.("window.location.pathname").then(
+            (res) => {
+              if (res) {
+                const match = res.match(/\/channels\/[^\/]+\/(\d+)/);
+                resolve(match ? match[1] : null);
+              } else {
+                resolve(null);
+              }
             }
-          });
+          );
         });
       };
 
@@ -94,7 +100,7 @@ export function SendChat({
         { headers: { authorization: authorization } }
       ).then((res) => res.json());
       const res = await fetch(
-        `https://discord.com/api/v9/channels/${channelId}/messages?limit=30`,
+        `https://discord.com/api/v9/channels/${channelId}/messages?limit=10`,
         { headers: { authorization: authorization } }
       ).then((res) => res.json());
 
@@ -149,10 +155,10 @@ export function SendChat({
               }
             }
 
-            return currentMessage ? [ ...currentMessage ] : null;
+            return currentMessage ? [...currentMessage] : null;
           });
           setMessages((messages) => {
-            console.log('messages', messages);
+            console.log("messages", messages);
             return [...messages];
           });
         },
@@ -190,12 +196,23 @@ export function SendChat({
 
   const actionItems = (content: string) => [
     {
-      key: 'copy',
-      label: 'copy',
+      key: "copy",
+      label: "copy",
       actionRender: () => {
         return <Actions.Copy text={content} />;
       },
-    }
+    },
+    {
+      key: "input",
+      icon: <IconEdit size={16} />,
+      label: "Input",
+      onItemClick: () => {
+        // 使用模拟用户输入模式（更真实）
+        sendToContent(MESSAGE_TYPES.DISCORD, {
+          inputValue: content,
+        });
+      },
+    },
   ];
 
   return (
@@ -226,9 +243,12 @@ export function SendChat({
             ) : null}
 
             {item.md ? (
-              <Bubble content={<XMarkdown content={item.md} />}  footer={() => (
-                <Actions items={actionItems(item.md!)} onClick={() => navigator.clipboard.writeText(item.md!)} />
-              )} />
+              <Bubble
+                content={<XMarkdown content={item.md} />}
+                footer={() => <Actions items={actionItems(item.md!)} />}
+              />
+            ) : !item.loading ? (
+              <div className="text-sm text-red">生成失败请重新生成</div>
             ) : null}
 
             {item.loading ? (
@@ -260,7 +280,9 @@ export function SendChat({
         />
         <ActionIcon
           onClick={handleSend}
-          disabled={!inputValue.trim() || isSending || loading || !authorization}
+          disabled={
+            !inputValue.trim() || isSending || loading || !authorization
+          }
           loading={isSending || loading}
           size="lg"
           radius="xl"

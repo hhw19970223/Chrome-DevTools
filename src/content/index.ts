@@ -3,10 +3,10 @@
  * 负责在网页中注入脚本，并在 DevTools 和 Injected Script 之间传递消息
  */
 
-import { ContentScriptBridge } from '../utils/bridge';
-import { DevToolsMessage } from '../utils/devtools-bridge';
-import { MESSAGE_TYPES, MessageType } from '../utils/message-types';
-import { logger } from '../utils/logger';
+import { ContentScriptBridge } from "../utils/bridge";
+import { DevToolsMessage } from "../utils/devtools-bridge";
+import { MESSAGE_TYPES, MessageType } from "../utils/message-types";
+import { logger } from "../utils/logger";
 
 class ContentScript {
   private bridge: ContentScriptBridge;
@@ -18,7 +18,7 @@ class ContentScript {
   }
 
   private init() {
-    logger.info('Content Script 初始化');
+    logger.info("Content Script 初始化");
 
     // 注入脚本到页面
     this.injectScript();
@@ -40,21 +40,21 @@ class ContentScript {
     }
 
     try {
-      const script = document.createElement('script');
-      script.src = chrome.runtime.getURL('injected.js');
+      const script = document.createElement("script");
+      script.src = chrome.runtime.getURL("injected.js");
       // 移除 type="module"，使用 IIFE 格式
       script.onload = () => {
-        logger.info('Injected script 加载成功');
+        logger.info("Injected script 加载成功");
         script.remove();
         this.isInjected = true;
       };
       script.onerror = () => {
-        logger.error('Injected script 加载失败');
+        logger.error("Injected script 加载失败");
       };
 
       (document.head || document.documentElement).appendChild(script);
     } catch (error) {
-      logger.error('注入脚本失败:', error);
+      logger.error("注入脚本失败:", error);
     }
   }
 
@@ -64,7 +64,7 @@ class ContentScript {
   private setupBridgeListeners() {
     // 监听来自 Injected Script 的消息，转发到 DevTools
     this.bridge.onMessage(MESSAGE_TYPES.INJECTED_SCRIPT_READY, (payload) => {
-      logger.info('Injected Script 已就绪');
+      logger.info("Injected Script 已就绪");
       this.sendToDevTools(MESSAGE_TYPES.INJECTED_SCRIPT_READY, payload);
     });
 
@@ -79,9 +79,9 @@ class ContentScript {
     });
 
     // 转发给devTool
-    this.bridge.onMessage('to-devtool' as MessageType, (payload) => {
+    this.bridge.onMessage("to-devtool" as MessageType, (payload) => {
       this.sendToDevTools(payload.type as MessageType, payload.payload);
-    })
+    });
   }
 
   /**
@@ -90,12 +90,12 @@ class ContentScript {
   private setupRuntimeListeners() {
     chrome.runtime.onMessage.addListener(
       (message: DevToolsMessage, _sender, sendResponse) => {
-        logger.debug('Content Script 收到消息:', message);
+        logger.debug("Content Script 收到消息:", message);
 
         // 根据目标转发消息
-        if (message.target === 'content-script') {
+        if (message.target === "content-script") {
           this.handleDevToolsMessage(message, sendResponse);
-        } else if (message.target === 'injected-script') {
+        } else if (message.target === "injected-script") {
           this.forwardToInjected(message, sendResponse);
         }
 
@@ -117,8 +117,8 @@ class ContentScript {
         break;
 
       default:
-        logger.warn('未处理的消息类型:', message.type);
-        sendResponse({ error: '未知消息类型' });
+        // 处理普通消息
+        this.forwardToInjected(message, () => {});
     }
   }
 
@@ -132,7 +132,7 @@ class ContentScript {
     try {
       // 通过 bridge 发送到 injected script
       this.bridge.postToInjected(message.type, message.payload);
-      
+
       // 某些消息需要等待响应
       if (this.needsResponse(message.type)) {
         const response = await this.bridge.requestToInjected(
@@ -144,7 +144,7 @@ class ContentScript {
         sendResponse({ success: true });
       }
     } catch (error) {
-      logger.error('转发消息到 Injected Script 失败:', error);
+      logger.error("转发消息到 Injected Script 失败:", error);
       sendResponse({ error: String(error) });
     }
   }
@@ -153,9 +153,7 @@ class ContentScript {
    * 判断消息是否需要响应
    */
   private needsResponse(messageType: MessageType): boolean {
-    const responseTypes: MessageType[] = [
-      
-    ];
+    const responseTypes: MessageType[] = [];
     return responseTypes.includes(messageType);
   }
 
@@ -169,11 +167,11 @@ class ContentScript {
       chrome.runtime.sendMessage({
         type,
         payload,
-        target: 'devtools',
-        source: 'content-script',
+        target: "devtools",
+        source: "content-script",
       });
     } catch (error) {
-      logger.error('发送消息到 DevTools 失败:', error);
+      logger.error("发送消息到 DevTools 失败:", error);
     }
   }
 

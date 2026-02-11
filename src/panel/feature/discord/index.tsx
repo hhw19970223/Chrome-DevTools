@@ -10,12 +10,10 @@ import { SendChat } from "@/panel/components/discord-chat/SendChat";
 import { StorageUtil } from "@/utils/storage";
 
 const DISCORD_PROMPT_CACHE_KEY = 'discord_prompt_cache';
-const DEFAULT_PROMPT = `
-  你作为一个资深的海外客服，请帮我根据海外用户的表达习惯以及用户的聊天习惯，自动调整并且翻译。
-`;
+const DEFAULT_PROMPT = `请帮我根据海外用户的表达习惯以及用户的聊天习惯，自动调整并且翻译。`;
 
 export function Discord() {
-  const { onMessage, offMessage, getWindowProperty } = useDevToolsBridge();
+  const { onMessage, offMessage, evalInWindow } = useDevToolsBridge();
   const [language, setLanguage] = useState('');
   const [authorization, setAuthorization] = useState('');
   const [prompt, setPrompt] = useState(DEFAULT_PROMPT);
@@ -39,9 +37,9 @@ export function Discord() {
 
   useEffect(() => {
 
-    getWindowProperty?.("window.hhw.discordCtrl.captureCSSStylesheets");
-    getWindowProperty?.("window.hhw.discordCtrl.getChatList");
-    getWindowProperty?.("window.hhw.discordCtrl.getAuthorization");
+    evalInWindow?.("window.hhw.discordCtrl.captureCSSStylesheets");
+    evalInWindow?.("window.hhw.discordCtrl.getChatList");
+    evalInWindow?.("window.hhw.discordCtrl.getAuthorization");
 
     onMessage(MESSAGE_TYPES.DISCORD, (payload) => {
       if (payload.htmlStrings) {
@@ -84,7 +82,7 @@ export function Discord() {
     />
   </div>
   <Split
-    sizes={[45, 45, 10]} // 初始宽度比例
+    sizes={[0, 100, 0]} // 初始宽度比例
     minSize={5} // 每个面板最小宽度
     gutterSize={8} // 拖动条宽度
     style={{ display: "flex", flex: "1 1 0%", overflow: "hidden" }}

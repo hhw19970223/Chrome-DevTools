@@ -1,4 +1,9 @@
-import { getlocalStorage, InjectedScriptBridge, MESSAGE_TYPES, discordToken } from "@/utils";
+import {
+  getlocalStorage,
+  InjectedScriptBridge,
+  MESSAGE_TYPES,
+  discordToken,
+} from "@/utils";
 import { BaseCtrl } from "../BaseCtrl";
 
 export class DiscordCtrl extends BaseCtrl {
@@ -23,29 +28,66 @@ export class DiscordCtrl extends BaseCtrl {
   }
 
   /**
+   * 获取 Discord 的输入框
+   */
+  private _getInputTextarea(): HTMLElement | null {
+    // Discord 使用 contenteditable div 作为输入框
+    return document
+      .querySelector("[class*='slateContainer_']")
+      ?.querySelector("[class*='slateTextArea_']") as HTMLElement;
+  }
+
+  /**
+   * 模拟用户粘贴操作
+   */
+  private async _simulateUserInput(value: string): Promise<void> {
+    const textarea = this._getInputTextarea();
+    if (!textarea) {
+      console.warn("Discord 输入框未找到");
+      return;
+    }
+
+    // 聚焦到输入框
+    textarea.focus();
+
+    // 创建 ClipboardEvent 模拟粘贴
+    const dataTransfer = new DataTransfer();
+    dataTransfer.setData('text/plain', value);
+    
+    // 触发 paste 事件
+    const pasteEvent = new ClipboardEvent('paste', {
+      bubbles: true,
+      cancelable: true,
+      clipboardData: dataTransfer,
+    });
+    
+    textarea.dispatchEvent(pasteEvent);
+    console.log("已模拟粘贴操作:", value);
+  }
+
+  /**
    * 获取 Discord 的 authorization token
    */
   public getAuthorization() {
-
-    let token = '';
+    let token = "";
 
     if (discordToken) {
       try {
         token = JSON.parse(discordToken);
-      } catch(e) {
-        token = discordToken
+      } catch (e) {
+        token = discordToken;
       }
     }
-    
+
     const value = getlocalStorage("token");
     if (value) {
       try {
         token = JSON.parse(value);
-      } catch(e) {
-        token = value
+      } catch (e) {
+        token = value;
       }
     }
-    
+
     if (token) {
       this.sendDevToolData({
         authorization: token,
@@ -74,7 +116,12 @@ export class DiscordCtrl extends BaseCtrl {
       this._observeMainDomChildren(this._mainDom);
     }
 
-    
+    // 监听来自 DevTools 的消息（通过 bridge）
+    this._bridge.onMessage(MESSAGE_TYPES.DISCORD, async (payload: any) => {
+      if (payload.inputValue) {
+        await this._simulateUserInput(payload.inputValue);
+      }
+    });
     // 获取 Discord authorization
     this.getAuthorization();
   }
@@ -198,7 +245,6 @@ export class DiscordCtrl extends BaseCtrl {
 
             // 获取 Discord authorization
             this.getAuthorization();
-
 
             // 发送给devtool渲染
             this.sendDevToolData({

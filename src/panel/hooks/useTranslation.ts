@@ -56,6 +56,9 @@ export function useTranslation() {
 
       setStatus("streaming");
       const prompt = `
+      # 角色
+      你是一个资深的海外客服
+      
       # 任务说明
       现在需要你将中文翻译成用户使用的语言,阿拉伯数字不需要翻译保持阿拉伯数字不变.
 
